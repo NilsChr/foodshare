@@ -1,4 +1,4 @@
-import { BookOpen, CalendarDays, ShoppingBasket, Users, type LucideIcon } from 'lucide-react'
+import { BookOpen, CalendarDays, Refrigerator, ShoppingBasket, Users, type LucideIcon } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router'
 import { useUser } from '../lib/auth'
 import { SpaceDataProvider, SpacesProvider, useSpace, useSpaces } from '../lib/space'
@@ -39,9 +39,10 @@ function BottomNav() {
   const open = items.filter((i) => !i.checked).length
   return (
     <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-line bg-card/90 backdrop-blur-md">
-      <div className="mx-auto grid h-16 max-w-2xl grid-cols-4">
+      <div className="mx-auto grid h-16 max-w-2xl grid-cols-5">
         <Tab to="/list" icon={ShoppingBasket} label={t('List')} badge={open} />
         <Tab to="/week" icon={CalendarDays} label={t('Week')} />
+        <Tab to="/pantry" icon={Refrigerator} label={t('At home')} />
         <Tab to="/recipes" icon={BookOpen} label={t('Recipes')} />
         <Tab to="/space" icon={Users} label={t('Group')} badge={invites.length} dot />
       </div>

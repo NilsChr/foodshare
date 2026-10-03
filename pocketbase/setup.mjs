@@ -173,6 +173,17 @@ const collections = [
     indexes: ["CREATE UNIQUE INDEX idx_meals_space_date ON meals (space, date)"],
     rules: "member",
   },
+  {
+    // What the household has at home; recipes are ranked by how little extra they need.
+    name: "pantry",
+    fields: [
+      rel("space", "spaces", { required: true, cascadeDelete: true }),
+      text("name", { required: true, max: 120 }),
+      rel("added_by", "users"),
+      ...timestamps,
+    ],
+    rules: "member",
+  },
 ];
 
 const memberRules = {

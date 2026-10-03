@@ -1,7 +1,7 @@
 // Fuzzy name matching shared by category keywords, recipe-vs-list status and synergy suggestions.
 // Handles plurals ("tomato"/"tomatoes", "tomat"/"tomater") and Norwegian compounds ("kyllingfilet" ~ "kylling").
 import { locale } from './i18n'
-import type { Category, Item, Recipe } from './pb'
+import type { Category, Item, PantryItem, Recipe } from './pb'
 
 const STOPWORDS = new Set([
   'a', 'an', 'and', 'of', 'the', 'fresh', 'chopped', 'diced', 'sliced', 'large', 'small', 'medium', 'to', 'taste',
@@ -97,20 +97,48 @@ export function categorize(name: string, categories: Category[]): string {
   return best
 }
 
-export type IngredientStatus = 'have' | 'to-buy' | 'unknown'
+export type IngredientStatus = 'have' | 'home' | 'to-buy' | 'unknown'
 
-/** Status of an ingredient from the list: still on it, already crossed off, or not on it at all. */
-export function ingredientStatus(name: string, items: Item[]): IngredientStatus {
+/** Status of an ingredient: still on the list, crossed off, in the pantry, or none of these. */
+export function ingredientStatus(name: string, items: Item[], pantry: PantryItem[]): IngredientStatus {
   const matches = items.filter((i) => namesMatch(name, i.name))
   if (matches.some((i) => !i.checked)) return 'to-buy'
   if (matches.length) return 'have'
+  if (pantry.some((p) => namesMatch(name, p.name))) return 'home'
   return 'unknown'
 }
 
-export function recipeReadiness(recipe: Recipe, items: Item[]) {
-  const counts = { have: 0, 'to-buy': 0, unknown: 0 }
-  for (const ing of recipe.ingredients ?? []) counts[ingredientStatus(ing.name, items)]++
+export function recipeReadiness(recipe: Recipe, items: Item[], pantry: PantryItem[]) {
+  const counts = { have: 0, home: 0, 'to-buy': 0, unknown: 0 }
+  for (const ing of recipe.ingredients ?? []) counts[ingredientStatus(ing.name, items, pantry)]++
   return counts
+}
+
+export interface PantryMatch {
+  recipe: Recipe
+  matched: string[]
+  missing: string[]
+}
+
+/**
+ * Recipes ranked by how few ingredients are missing from what is at home
+ * (the pantry plus crossed-off list items). Only recipes that use something at home.
+ */
+export function pantryMatches(recipes: Recipe[], items: Item[], pantry: PantryItem[]): PantryMatch[] {
+  const home = [...pantry.map((p) => p.name), ...items.filter((i) => i.checked).map((i) => i.name)]
+  if (!home.length) return []
+  return recipes
+    .filter((r) => r.ingredients?.length)
+    .map((recipe) => {
+      const matched: string[] = []
+      const missing: string[] = []
+      for (const ing of recipe.ingredients ?? []) {
+        ;(home.some((h) => namesMatch(ing.name, h)) ? matched : missing).push(ing.name)
+      }
+      return { recipe, matched, missing }
+    })
+    .filter((m) => m.matched.length)
+    .sort((a, b) => a.missing.length - b.missing.length || b.matched.length - a.matched.length || a.recipe.title.localeCompare(b.recipe.title))
 }
 
 export function recipeOnList(recipeId: string, items: Item[]) {

@@ -13,7 +13,7 @@ import { t } from '../lib/i18n'
 export default function RecipePage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { recipes, items, loading, removeItem } = useSpace()
+  const { recipes, items, pantry, loading, removeItem } = useSpace()
   const recipe = recipes.find((r) => r.id === id)
   const [adding, setAdding] = useState(false)
   const [planning, setPlanning] = useState(false)
@@ -94,7 +94,7 @@ export default function RecipePage() {
             <h2 className="mb-2 text-lg font-extrabold">{t('Ingredients')}</h2>
             <ul className="divide-y divide-line overflow-hidden rounded-3xl bg-card ring-1 ring-line">
               {recipe.ingredients.map((ing, i) => {
-                const s = STATUS[ingredientStatus(ing.name, items)]
+                const s = STATUS[ingredientStatus(ing.name, items, pantry)]
                 return (
                   <li key={i} className="flex items-center gap-3 px-4 py-3">
                     <s.icon className={`size-5 shrink-0 ${s.className}`} aria-label={s.label} />

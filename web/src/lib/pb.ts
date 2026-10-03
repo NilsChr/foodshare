@@ -79,6 +79,12 @@ export interface Meal extends RecordModel {
   factor: number
 }
 
+export interface PantryItem extends RecordModel {
+  space: string
+  name: string
+  added_by: string
+}
+
 export const col = {
   spaces: () => pb.collection<Space>('spaces'),
   memberships: () => pb.collection<Membership>('memberships'),
@@ -87,6 +93,7 @@ export const col = {
   recipes: () => pb.collection<Recipe>('recipes'),
   items: () => pb.collection<Item>('items'),
   meals: () => pb.collection<Meal>('meals'),
+  pantry: () => pb.collection<PantryItem>('pantry'),
   users: () => pb.collection<User>('users'),
 }
 

@@ -68,6 +68,12 @@ check("eve lists no items",
 check("eve cannot create item in space",
   (await call(eve.token, "POST", "/api/collections/items/records", { space: space.id, name: "x" })).status, 400);
 
+const stock = (await call(alice.token, "POST", "/api/collections/pantry/records", { space: space.id, name: "Rice" })).body;
+check("member adds pantry item", !!stock.id, true);
+check("eve cannot view pantry item", (await call(eve.token, "GET", `/api/collections/pantry/records/${stock.id}`)).status, 404);
+check("eve cannot add to pantry",
+  (await call(eve.token, "POST", "/api/collections/pantry/records", { space: space.id, name: "x" })).status, 400);
+
 const invite = (await call(alice.token, "POST", "/api/collections/invites/records", {
   space: space.id, email: bob.email, invited_by: alice.id, space_name: space.name, inviter_name: "Alice",
 })).body;
@@ -91,6 +97,7 @@ check("bob renames space",
 check("bob cannot delete space", (await call(bob.token, "DELETE", `/api/collections/spaces/records/${space.id}`)).status, 404);
 check("alice deletes space", (await call(alice.token, "DELETE", `/api/collections/spaces/records/${space.id}`)).status, 204);
 check("item cascade-deleted", (await call(admin, "GET", `/api/collections/items/records/${item.id}`)).status, 404);
+check("pantry cascade-deleted", (await call(admin, "GET", `/api/collections/pantry/records/${stock.id}`)).status, 404);
 
 console.log(failed ? `${failed} failed` : "all passed");
 process.exit(failed ? 1 : 0);

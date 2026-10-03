@@ -37,11 +37,13 @@ All space data is reachable only by members of the space (`space.memberships_via
 | `items` | Shopping list. `checked` = in the basket. `recipe` links items added from a recipe. |
 | `recipes` | `ingredients` is JSON `[{name, quantity}]`; `image` has thumbs; `favorited_by` is per-user favorites; `minutes` = cooking time; `tags` is a JSON string list; `source`/`source_url` record where an import came from (unique per space). |
 | `meals` | One dinner per space and day (`date` = `YYYY-MM-DD`): a recipe or a free-text `note`. `factor` 2 = doubled for leftovers. |
+| `pantry` | What the household has at home ("At home" tab): one `name` per row, shared by the space. No quantities. |
 
 ## How the smart parts work (`web/src/lib/match.ts`)
 
 - **Auto sections:** a new item goes into the category with the longest matching keyword. Matching handles plurals and Norwegian compound words. Moving an item to another section adds its name to that section's keywords. A section can be shown together with another (Group → section → Show together with): one header in the list, separate keywords and data.
-- **Have the ingredients?** An ingredient counts as *in the basket* when a matching item is crossed off, *on the list* when a matching item is still open, otherwise *not on the list*. Crossed-off items count until someone clears them.
+- **Have the ingredients?** An ingredient counts as *in the basket* when a matching item is crossed off, *on the list* when a matching item is still open, *at home* when it matches the pantry, otherwise *not on the list*. Crossed-off items count until someone clears them.
+- **At home:** ingredients matching a pantry row count as *at home* (after the list statuses above). The At home tab ranks recipes that use at least one thing at home by fewest missing ingredients, then most matched. Crossed-off list items count as at home there too.
 - **Synergy:** the list page suggests recipes that reuse at least two open items, ranked by most reused and fewest extra items.
 
 ## Recipe import (server hook)

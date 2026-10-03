@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useMe } from './auth'
 import { createDefaultCategories } from './categories'
-import { col, type Category, type Invite, type Item, type Meal, type Membership, type Recipe, type Space } from './pb'
+import { col, type Category, type Invite, type Item, type Meal, type Membership, type PantryItem, type Recipe, type Space } from './pb'
 import { useLiveRecords } from './realtime'
 
 const CURRENT_KEY = 'foodshare.space'
@@ -106,6 +106,7 @@ interface SpaceData {
   recipes: Recipe[]
   categories: Category[]
   meals: Meal[]
+  pantry: PantryItem[]
   members: Membership[]
   loading: boolean
   patchItem: (item: Item) => void
@@ -113,6 +114,8 @@ interface SpaceData {
   patchRecipe: (recipe: Recipe) => void
   patchMeal: (meal: Meal) => void
   removeMeal: (id: string) => void
+  patchPantry: (item: PantryItem) => void
+  removePantry: (id: string) => void
   reloadMembers: () => void
 }
 
@@ -124,6 +127,7 @@ export function SpaceDataProvider({ space, children }: { space: Space; children:
   const recipes = useLiveRecords(col.recipes, space.id, 'title')
   const categories = useLiveRecords(col.categories, space.id, 'sort')
   const meals = useLiveRecords(col.meals, space.id, 'date')
+  const pantry = useLiveRecords(col.pantry, space.id)
   const [members, setMembers] = useState<Membership[]>([])
 
   const reloadMembers = useCallback(() => {
@@ -140,6 +144,7 @@ export function SpaceDataProvider({ space, children }: { space: Space; children:
       recipes: [...recipes.records].sort((a, b) => a.title.localeCompare(b.title)),
       categories: [...categories.records].sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name)),
       meals: meals.records,
+      pantry: [...pantry.records].sort((a, b) => a.name.localeCompare(b.name)),
       members,
       loading: items.loading || recipes.loading || categories.loading,
       patchItem: items.patch,
@@ -147,11 +152,13 @@ export function SpaceDataProvider({ space, children }: { space: Space; children:
       patchRecipe: recipes.patch,
       patchMeal: meals.patch,
       removeMeal: meals.remove,
+      patchPantry: pantry.patch,
+      removePantry: pantry.remove,
       reloadMembers,
     }),
     // patch/remove helpers only close over setState.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [space, items.records, recipes.records, categories.records, meals.records, members, items.loading, recipes.loading, categories.loading, reloadMembers],
+    [space, items.records, recipes.records, categories.records, meals.records, pantry.records, members, items.loading, recipes.loading, categories.loading, reloadMembers],
   )
   return <SpaceDataContext.Provider value={value}>{children}</SpaceDataContext.Provider>
 }

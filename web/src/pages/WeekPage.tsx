@@ -13,7 +13,7 @@ import { useSpace } from '../lib/space'
 import { t, tn } from '../lib/i18n'
 
 export default function WeekPage() {
-  const { meals, recipes, items, loading } = useSpace()
+  const { meals, recipes, loading } = useSpace()
   const [monday, setMonday] = useState(() => startOfWeek(new Date()))
   const [picking, setPicking] = useState<string | null>(null)
   const [adding, setAdding] = useState<{ recipe: Recipe; factor: number } | null>(null)
@@ -62,7 +62,7 @@ export default function WeekPage() {
                           <span className="truncate font-extrabold">{recipe.title}</span>
                           {meal.factor > 1 && <span className="shrink-0 rounded-full bg-brand-soft px-1.5 text-xs font-black text-brand-text">×{meal.factor}</span>}
                         </span>
-                        <Readiness recipe={recipe} items={items} onAdd={() => setAdding({ recipe, factor: meal.factor || 1 })} />
+                        <Readiness recipe={recipe} onAdd={() => setAdding({ recipe, factor: meal.factor || 1 })} />
                       </span>
                     </Link>
                   ) : (
@@ -91,10 +91,11 @@ export default function WeekPage() {
   )
 }
 
-/** Ingredient status for a planned dinner, from what is on or crossed off the list. */
-function Readiness({ recipe, items, onAdd }: { recipe: Recipe; items: ReturnType<typeof useSpace>['items']; onAdd: () => void }) {
+/** Ingredient status for a planned dinner, from the list and what is at home. */
+function Readiness({ recipe, onAdd }: { recipe: Recipe; onAdd: () => void }) {
+  const { items, pantry } = useSpace()
   if (!recipe.ingredients?.length) return null
-  const r = recipeReadiness(recipe, items)
+  const r = recipeReadiness(recipe, items, pantry)
   if (!r.unknown && !r['to-buy']) {
     return <span className="flex items-center gap-1 text-sm font-bold text-brand-text"><CircleCheck className="size-4" /> {t('Got everything')}</span>
   }
@@ -114,7 +115,7 @@ function Readiness({ recipe, items, onAdd }: { recipe: Recipe; items: ReturnType
 /** Add every not-yet-listed ingredient for the rest of the visible week in one go. */
 function ShopForWeek({ days }: { days: string[] }) {
   const me = useMe()
-  const { space, meals, recipes, items, categories, patchItem } = useSpace()
+  const { space, meals, recipes, items, pantry, categories, patchItem } = useSpace()
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(0)
   const today = todayKey()
@@ -127,12 +128,12 @@ function ShopForWeek({ days }: { days: string[] }) {
       for (const ing of recipe?.ingredients ?? []) {
         const key = normalize(ing.name)
         if (!key || out.has(key)) continue
-        if (ingredientStatus(ing.name, items) !== 'unknown') continue
+        if (ingredientStatus(ing.name, items, pantry) !== 'unknown') continue
         out.set(key, { name: ing.name, quantity: scaleQuantity(ing.quantity, m.factor || 1), recipe: m.recipe })
       }
     }
     return [...out.values()]
-  }, [meals, recipes, items, days, today])
+  }, [meals, recipes, items, pantry, days, today])
 
   if (!needed.length) {
     return done ? <p className="px-1 pt-2 text-center text-sm font-bold text-brand-text">{t('Added {n} items to the list.', { n: done })}</p> : null

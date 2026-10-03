@@ -5,6 +5,7 @@ import Layout from './components/Layout'
 import './index.css'
 import { AuthProvider } from './lib/auth'
 import ListPage from './pages/ListPage'
+import PantryPage from './pages/PantryPage'
 import RecipeEdit from './pages/RecipeEdit'
 import RecipePage from './pages/RecipePage'
 import RecipesPage from './pages/RecipesPage'
@@ -18,6 +19,7 @@ const router = createBrowserRouter([
       { index: true, element: <Navigate to="/list" replace /> },
       { path: 'list', element: <ListPage /> },
       { path: 'week', element: <WeekPage /> },
+      { path: 'pantry', element: <PantryPage /> },
       { path: 'recipes', element: <RecipesPage /> },
       { path: 'recipes/new', element: <RecipeEdit /> },
       { path: 'recipes/:id', element: <RecipePage /> },

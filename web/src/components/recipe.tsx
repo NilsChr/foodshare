@@ -1,4 +1,4 @@
-import { BookOpen, Check, Circle, CircleCheck, Heart, ListPlus, ShoppingBasket } from 'lucide-react'
+import { BookOpen, Check, Circle, CircleCheck, Heart, House, ListPlus, ShoppingBasket } from 'lucide-react'
 import { useState } from 'react'
 import { useMe } from '../lib/auth'
 import { categorize, ingredientStatus, proper, scaleQuantity, type IngredientStatus } from '../lib/match'
@@ -43,11 +43,11 @@ export function FavoriteButton({ recipe, className = '' }: { recipe: Recipe; cla
 
 export const STATUS: Record<IngredientStatus, { icon: typeof Check; label: string; className: string }> = {
   have: { icon: CircleCheck, label: t('In the basket'), className: 'text-brand-text' },
+  home: { icon: House, label: t('At home'), className: 'text-brand-text' },
   'to-buy': { icon: ShoppingBasket, label: t('On the list'), className: 'text-warn-text' },
   unknown: { icon: Circle, label: t('Not on the list'), className: 'text-muted' },
 }
 
-/** Pick which ingredients to put on the list. Already listed or crossed-off ingredients start unselected. */
 /** ×2 switch used where a recipe is planned or put on the list. */
 export function DoubleToggle({ on, onChange, hint }: { on: boolean; onChange: (on: boolean) => void; hint: string }) {
   return (
@@ -81,11 +81,12 @@ export async function planRecipe(space: string, date: string, recipe: Recipe, do
   return { saved, removed }
 }
 
+/** Pick which ingredients to put on the list. Ingredients already listed, crossed off or at home start unselected. */
 export function AddToListSheet({ recipe, open, onClose, factor: initialFactor = 1 }: {
   recipe: Recipe; open: boolean; onClose: () => void; factor?: number
 }) {
   const me = useMe()
-  const { items, categories, patchItem } = useSpace()
+  const { items, pantry, categories, patchItem } = useSpace()
   const ingredients = recipe.ingredients ?? []
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [wasOpen, setWasOpen] = useState(false)
@@ -98,7 +99,7 @@ export function AddToListSheet({ recipe, open, onClose, factor: initialFactor = 
     if (open) {
       setError('')
       setFactor(initialFactor)
-      setSelected(new Set(ingredients.flatMap((ing, i) => (ingredientStatus(ing.name, items) === 'unknown' ? [i] : []))))
+      setSelected(new Set(ingredients.flatMap((ing, i) => (ingredientStatus(ing.name, items, pantry) === 'unknown' ? [i] : []))))
     }
   }
 
@@ -140,7 +141,7 @@ export function AddToListSheet({ recipe, open, onClose, factor: initialFactor = 
       </div>
       <ul className="-mx-2 mb-4">
         {ingredients.map((ing, i) => {
-          const status = ingredientStatus(ing.name, items)
+          const status = ingredientStatus(ing.name, items, pantry)
           const on = selected.has(i)
           return (
             <li key={i}>
