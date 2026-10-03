@@ -1,0 +1,80 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/nunito';
+
+:root {
+  --bg: #f7f7f2;
+  --card: #ffffff;
+  --ink: #1c2420;
+  --muted: #6b746f;
+  --line: #e7e8e1;
+  --soft: #eff1ea;
+  --brand: #16a34a;
+  --brand-ink: #ffffff;
+  --brand-soft: #dcfce7;
+  --brand-text: #15803d;
+  --warn-soft: #fef3c7;
+  --warn-text: #b45309;
+  --danger: #dc2626;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121614;
+    --card: #1b201d;
+    --ink: #eef1ec;
+    --muted: #9aa49e;
+    --line: #2a312d;
+    --soft: #232a26;
+    --brand: #22c55e;
+    --brand-ink: #062712;
+    --brand-soft: #133a22;
+    --brand-text: #4ade80;
+    --warn-soft: #3a2c10;
+    --warn-text: #fbbf24;
+    --danger: #f87171;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --font-sans: 'Nunito Variable', ui-sans-serif, system-ui, sans-serif;
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-soft: var(--soft);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-text: var(--brand-text);
+  --color-warn-soft: var(--warn-soft);
+  --color-warn-text: var(--warn-text);
+  --color-danger: var(--danger);
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+body {
+  @apply font-sans antialiased;
+}
+
+input,
+textarea,
+select {
+  font-size: 16px; /* prevents iOS zoom on focus */
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
