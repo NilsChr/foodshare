@@ -102,6 +102,8 @@ export default function SpacePage() {
         <Account />
 
         {isOwner && <DeleteSpace />}
+
+        <p className="text-center text-xs text-muted">Foodshare v{__APP_VERSION__}</p>
       </main>
 
       <NameSheet

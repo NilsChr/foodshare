@@ -25,7 +25,8 @@ function SpaceShell() {
   if (!current) return <Onboarding />
   return (
     <SpaceDataProvider key={current.id} space={current}>
-      <div className="min-h-dvh pb-24">
+      {/* Room for the fixed bottom nav (4rem + home indicator), plus some air. */}
+      <div className="min-h-dvh pb-[calc(6rem+env(safe-area-inset-bottom))]">
         <Outlet />
       </div>
       <BottomNav />

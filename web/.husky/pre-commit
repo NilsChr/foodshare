@@ -1,0 +1,4 @@
+# Bump the patch version on every commit; the app shows it on the Group page.
+cd web
+npm version patch --no-git-tag-version >/dev/null
+git add package.json package-lock.json
