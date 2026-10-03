@@ -1,0 +1,3 @@
+# Only the hooks go into the image; scripts and local data stay out.
+*
+!pb_hooks

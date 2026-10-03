@@ -5,8 +5,8 @@ Shared food planner PWA for families, friends and flatmates: shared live shoppin
 - `web/` — Vite + React + TypeScript + Tailwind PWA. Talks directly to PocketBase.
 - `pocketbase/setup.mjs` — idempotent schema and API rules. Re-run after editing.
 - `pocketbase/test-rules.mjs` — checks the access rules against the live server with test users.
-- `pocketbase/pb_hooks/` — server hooks (recipe import). Must be deployed to the server separately, see below.
-- `pocketbase/deploy-hooks.sh` — copies the hooks into the container over SSH. Not used today: the server is managed through Coolify without SSH.
+- `pocketbase/pb_hooks/` — server hooks (recipe import).
+- `pocketbase/Dockerfile` — PocketBase v0.40.4 with the hooks baked in. See "Deploying PocketBase".
 
 ## Setup
 
@@ -52,17 +52,24 @@ All space data is reachable only by members of the space (`space.memberships_via
 
 The client side is `web/src/lib/importRecipe.ts`: the `SOURCES` list (ODA only for now), ingredient parsing ("600 g Kyllingfilet, stor" → 600 g / Kyllingfilet), ISO durations, and tags from `keywords` + `recipeCategory`. Re-importing a link already in the space is blocked (normalized URL, plus a unique index).
 
-**Deploying the hook (Coolify):** the PocketBase service uses the Coolify template, which mounts the `pocketbase-hooks` volume at `/app/pb_hooks`. Without SSH, open the service in Coolify → **Terminal** → pocketbase container, and write the file with a heredoc:
+The hook ships inside the PocketBase image, so deploying PocketBase deploys the hook. Check: `POST /api/foodshare/import-recipe` without login must answer 401 (404 = hook not loaded). Tested locally on PocketBase 0.40.4.
 
-```sh
-cat > /app/pb_hooks/import_recipe.pb.js <<'FOODSHARE_EOF'
-…file contents…
-FOODSHARE_EOF
-```
+## Deploying PocketBase
 
-Then restart the service. Check: `POST /api/foodshare/import-recipe` without login must answer 401 (404 = hook not loaded). Re-deploy whenever the hook file changes. Tested locally on PocketBase 0.40.4.
+`pocketbase/Dockerfile` builds PocketBase v0.40.4 (amd64 or arm64, checksum-verified) with `pb_hooks/` copied in. Data lives in `/pb/pb_data`; it serves on port 8080 and has a health check on `/api/health`.
 
-Longer term: build a Docker image from this repo (PocketBase + `pb_hooks` + the built app in `pb_public`) and let Coolify deploy it on push. That needs a Git remote and a one-time data move (PocketBase backup/restore).
+Coolify: new resource from the Git repo → Build Pack "Dockerfile", Base Directory `/pocketbase`, port 8080, persistent storage mounted at `/pb/pb_data`. Push to redeploy (hook changes included).
+
+Moving from the old Coolify template service:
+
+1. Take a backup in the old PocketBase dashboard (Settings → Backups) and download it.
+2. Deploy the new service and create a superuser (from the log's install link, or `/pb/pocketbase superuser upsert EMAIL PASS` in the Coolify terminal).
+3. In the new dashboard: Settings → Backups → upload the backup and restore it. This replaces the data, including superusers.
+4. Point the domain at the new service, check the 401 above, then stop the old one.
+
+Version upgrades: change `PB_VERSION` and the two SHA-256 sums (from the release's `checksums.txt`) in the Dockerfile.
+
+Local run: `docker build -t foodshare-pb pocketbase && docker run -p 8090:8080 -v "$PWD/pb_data:/pb/pb_data" foodshare-pb`.
 
 ## Language
 
@@ -72,13 +79,13 @@ English and Norwegian (bokmål). The browser language picks the default; users c
 
 - Rules: `node --env-file=.env pocketbase/test-rules.mjs` (creates/uses alice, bob, eve @foodshare.test; password `TEST_USER_PASSWORD` in `.env`).
 - UI: create a throwaway space for alice through the API, test in the browser at `http://127.0.0.1:<port>` (separate storage from a real session on `localhost`), then delete the space as superuser. Never test on real users' spaces.
-- Hooks: download PocketBase, run `./pocketbase serve --dir ./data --hooksDir pocketbase/pb_hooks`, point `setup.mjs` at it (`POCKETBASE_URL=…`) and run a second Vite with `VITE_POCKETBASE_URL` set to it.
+- Hooks: run the image locally (see "Deploying PocketBase"), point `setup.mjs` at it (`POCKETBASE_URL=http://localhost:8090`) and run a second Vite with `VITE_POCKETBASE_URL` set to it.
 - Type-check with `./node_modules/.bin/tsc -b` in `web/`. A command-rewriting hook (RTK) can turn `npx tsc` into an old global compiler.
 - A stale service worker in the browser can serve an old app build; clear it under DevTools → Application if the UI doesn't match the code.
 
 ## Open items
 
-- Deploy the recipe-import hook to the server (see above), then test import there.
+- Move the live PocketBase to the Docker image (see "Deploying PocketBase"), then test recipe import there.
 - Decide where the web app is hosted (PocketBase `pb_public` via a Docker build is the simplest single-origin option).
 - Turn on Google sign-in and email OTP (SMTP) in PocketBase.
 - Idea, not built: public recipes ("share publicly" + an Explore tab where others copy recipes into their own space).
