@@ -103,14 +103,14 @@ export default function ListPage() {
     try {
       // Re-adding something already crossed off brings it back instead of duplicating it.
       const existing = items.find((i) => normalize(i.name) === normalize(name))
-      if (existing) {
-        if (existing.checked || quantity) {
-          patchItem(await col.items().update(existing.id, { checked: false, quantity: quantity || existing.quantity }))
-        }
+      if (existing?.checked) {
+        patchItem(await col.items().update(existing.id, { checked: false, quantity: quantity || existing.quantity }))
         return
       }
+      if (existing && !quantity) return
+      // The server adds the amount to an open item with the same name ("Milk 1 l" + "2 l" -> "3 l").
       patchItem(await col.items().create({
-        space: space.id, name, quantity, category: categorize(name, categories), added_by: me.id,
+        space: space.id, name: existing?.name ?? name, quantity, category: categorize(name, categories), added_by: me.id,
       }))
     } catch (err) {
       setError(errorMessage(err))
@@ -128,10 +128,10 @@ export default function ListPage() {
     }
   }
 
-  async function clearChecked() {
-    if (!confirm(tn(checked.length, 'Remove {n} crossed-off item?', 'Remove {n} crossed-off items?'))) return
-    checked.forEach((i) => removeItem(i.id))
-    await Promise.all(checked.map((i) => col.items().delete(i.id).catch(() => {})))
+  async function remove(list: Item[], question: string) {
+    if (!confirm(question)) return
+    list.forEach((i) => removeItem(i.id))
+    await Promise.all(list.map((i) => col.items().delete(i.id).catch(() => {})))
   }
 
   function setGroupedPersist(on: boolean) {
@@ -146,6 +146,10 @@ export default function ListPage() {
   return (
     <>
       <PageHeader title={t('Shopping list')}>
+        {items.length > 0 && (
+          <IconButton icon={Trash2} label={t('Clear list')}
+            onClick={() => remove(items, tn(items.length, 'Remove {n} item from the list?', 'Remove all {n} items from the list?'))} />
+        )}
         {grouped && <IconButton icon={ArrowUpDown} label={t('Order sections')} onClick={() => setOrdering(true)} />}
         <IconButton
           icon={grouped ? Layers : List}
@@ -219,7 +223,7 @@ export default function ListPage() {
                     <ChevronDown className={`size-3.5 transition ${showChecked ? '' : '-rotate-90'}`} />
                     {t('In the basket ({n})', { n: checked.length })}
                   </button>
-                  <button onClick={clearChecked} className="flex items-center gap-1 text-sm font-bold text-muted hover:text-danger">
+                  <button onClick={() => remove(checked, tn(checked.length, 'Remove {n} crossed-off item?', 'Remove {n} crossed-off items?'))} className="flex items-center gap-1 text-sm font-bold text-muted hover:text-danger">
                     <Trash2 className="size-4" /> {t('Clear')}
                   </button>
                 </div>

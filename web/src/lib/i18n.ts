@@ -117,6 +117,9 @@ const NO: Record<string, string> = {
   Clear: 'Tøm',
   'Remove {n} crossed-off item?': 'Fjerne {n} avkrysset vare?',
   'Remove {n} crossed-off items?': 'Fjerne {n} avkryssede varer?',
+  'Clear list': 'Tøm listen',
+  'Remove {n} item from the list?': 'Fjerne {n} vare fra listen?',
+  'Remove all {n} items from the list?': 'Fjerne alle {n} varene fra listen?',
   'Crossed-off items count as “at home” for your recipes until you clear them.':
     'Avkryssede varer regnes som «hjemme» for oppskriftene til du tømmer dem.',
   'Edit {name}': 'Rediger {name}',

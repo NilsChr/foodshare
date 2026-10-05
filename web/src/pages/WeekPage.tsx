@@ -34,7 +34,7 @@ export default function WeekPage() {
         <IconButton icon={ChevronRight} label={t('Next week')} onClick={() => setMonday(addDays(monday, 7))} />
       </PageHeader>
 
-      <main className="mx-auto max-w-2xl space-y-2.5 px-4 pb-4">
+      <main className="mx-auto max-w-2xl space-y-2.5 px-4 pt-1 pb-4">
         {!isThisWeek && (
           <button onClick={() => setMonday(startOfWeek(new Date()))} className="mb-1 text-sm font-bold text-brand-text">
             {t('Back to this week')}

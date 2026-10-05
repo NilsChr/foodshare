@@ -5,7 +5,7 @@ Shared food planner PWA for families, friends and flatmates: shared live shoppin
 - `web/` — Vite + React + TypeScript + Tailwind PWA. Talks directly to PocketBase.
 - `pocketbase/setup.mjs` — idempotent schema and API rules. Re-run after editing.
 - `pocketbase/test-rules.mjs` — checks the access rules against the live server with test users.
-- `pocketbase/pb_hooks/` — server hooks (recipe import).
+- `pocketbase/pb_hooks/` — server hooks (recipe import; merging list items with the same name, `merge_items.pb.js`).
 - `pocketbase/Dockerfile` — PocketBase v0.40.4 with the hooks baked in. See "Deploying PocketBase".
 
 ## Setup
