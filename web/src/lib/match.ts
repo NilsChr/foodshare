@@ -175,6 +175,7 @@ export function synergies(recipes: Recipe[], items: Item[], limit = 3): Synergy[
 }
 
 // Plural and definite endings (Norwegian and English): "pølse" -> "pølser", "egg" -> "eggene".
+// offerWordMatch is mirrored in pocketbase/pb_hooks/offer_matches.js; keep in step.
 const ENDINGS = ['', 's', 'es', 'e', 'r', 'er', 'n', 'en', 'et', 'ne', 'ene', 'a']
 
 /**
@@ -202,10 +203,11 @@ export function indexOffers(offers: Offer[]): OfferIndex {
 
 /**
  * Offers for a list item. `offers`: headings containing every word of the name (closest first,
- * then cheapest), then offers of the same product type that the server confirmed the name
- * means (`confirmed`, see pb_hooks/offer_matches.js; "kaffe" ~ "ALI FILTERMALT"), cheapest
- * first. `similar`: the type's other offers, cheapest first ("parmesan" ~ "SYNNØVE GULOST"),
- * also all of them while the server has not checked yet (`confirmed` null).
+ * then cheapest), then offers of the same product type that share no words, cheapest first
+ * ("kaffe" ~ "ALI FILTERMALT"). `similar`: the rest. Two kinds count only once the server
+ * confirmed the name means them (`confirmed`, see pb_hooks/offer_matches.js; null = not
+ * checked yet): word matches of another known type ("salat" ~ "REKESALAT", lettuce vs
+ * prepared_salad) and offers of the item's type that share no words.
  */
 export function offersFor(name: string, index: OfferIndex, productType = '', confirmed: string[] | null = null) {
   const words = tokens(name)
@@ -216,13 +218,18 @@ export function offersFor(name: string, index: OfferIndex, productType = '', con
       .map((e) => e.offer)
     : []
   if (!productType || productType === 'none') return { offers: byWords, similar: [] }
-  const seen = new Set(byWords.map((o) => o.id))
   const ok = new Set(confirmed ?? [])
+  const known = (o: Offer) => o.product_type && o.product_type !== 'none'
+  const wordOk = (o: Offer) => !known(o) || o.product_type === productType || ok.has(o.id)
+  const seen = new Set(byWords.map((o) => o.id))
   const byType = index
     .filter((e) => e.offer.product_type === productType && !seen.has(e.offer.id))
     .map((e) => e.offer)
     .sort((a, b) => a.price - b.price)
-  return { offers: [...byWords, ...byType.filter((o) => ok.has(o.id))], similar: byType.filter((o) => !ok.has(o.id)) }
+  return {
+    offers: [...byWords.filter(wordOk), ...byType.filter((o) => ok.has(o.id))],
+    similar: [...byWords.filter((o) => !wordOk(o)), ...byType.filter((o) => !ok.has(o.id))],
+  }
 }
 
 const UNIT = '(?:x|stk|pcs|pk|g|kg|l|dl|ml|cl)'

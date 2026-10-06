@@ -6,14 +6,19 @@
 //
 // Cases come from real flyers (October 2026). `same`: should the item show the offer?
 // Offers sharing words with the item are matched by the app without Jev, so the cases are
-// mostly pairs that share none. Known misses at the time of writing (87%): feta ~ Apetina,
-// filterkaffe ~ ALI FILTERMALT (borderline), fløtemysost, baconsvor and tørkerull taken as
-// gulost, bacon and toalettpapir. Answers vary a little between runs.
+// mostly pairs that share none, plus word matches of another type. Known misses at the time
+// of writing (90%): feta ~ Apetina, filterkaffe ~ ALI FILTERMALT (borderline); fløtemysost,
+// baconsvor, tørkerull and spylervæske taken as gulost, bacon, toalettpapir and
+// oppvaskmiddel. Answers vary a little between runs.
+import fs from 'node:fs'
 import { createRequire } from 'node:module'
 
-const { matchQuestion, MIN_P } = createRequire(import.meta.url)('./pb_hooks/offer_matches.js')
+const { matchQuestion, matchState, typeLabel, MIN_P } = createRequire(import.meta.url)('./pb_hooks/offer_matches.js')
+const TYPES = JSON.parse(fs.readFileSync(new URL('./pb_hooks/product_types.json', import.meta.url))).types
 
-// [item, offer heading, description, product type name, same]
+// [item, offer heading, description, offer's product type name, same]. The item's own type
+// is the type of its first case (a name in product_types.json), as the server would have
+// resolved it.
 const CASES = [
   ['parmesan', 'PARMESAN REVET', '60 g pr. pk', 'Gulost', true],
   ['parmesan', 'Coop parmigiano stick', '125 g. Pr stk', 'Gulost', true],
@@ -41,11 +46,11 @@ const CASES = [
   ['melk', 'TAFFEL', '', 'Melk', true],
   ['melk', 'SJOKOMELK', '', 'Melk', false],
   ['melk', 'Kondensert melk 397 g', '', 'Melk', false],
-  ['kylling', 'HEL LANDKYLLING', '', 'Hel kylling', true],
-  ['pølser', 'GILDE JUBELWIENER', '', 'Pølser', true],
-  ['pølser', 'Wienerbakst', '', 'Pølser', false],
-  ['grillpølser', 'GILDE JUBELWIENER', '', 'Pølser', false],
-  ['grillpølser', 'KJØTTPØLSE', '', 'Pølser', false],
+  ['kylling', 'HEL LANDKYLLING', '', 'Kylling', true],
+  ['pølser', 'GILDE JUBELWIENER', '', 'Pølse', true],
+  ['pølser', 'Wienerbakst', '', 'Pølse', false],
+  ['grillpølser', 'GILDE JUBELWIENER', '', 'Pølse', false],
+  ['grillpølser', 'KJØTTPØLSE', '', 'Pølse', false],
   ['spaghetti', 'TAGLIATELLE', '', 'Pasta', false],
   ['spaghetti', 'Nudler 90 g', '', 'Pasta', false],
   ['pasta', 'TAGLIATELLE', '', 'Pasta', true],
@@ -70,12 +75,22 @@ const CASES = [
   ['oppvaskmiddel', 'OMO KAPSLER 5I1', '', 'Rengjøring', false],
   ['laks', 'LAKS LOIN', '', 'Laks', true],
   ['bacon', 'BACONSVOR', '', 'Bacon', false],
-  ['smør', 'MELANGE MARGARIN', '', 'Smør', false],
+  ['smør', 'MELANGE MARGARIN', '', 'Smør og margarin', false],
   ['rømme', 'Q-LETTRØMME', '', 'Rømme', true],
   ['egg', 'Mini-omelett', '', 'Egg', false],
   ['appelsinjuice', 'EPLEJUICE', '', 'Juice', false],
   ['feta', 'APETINA SNACK', 'Salatost i terninger', 'Hvit ost', true],
   ['tortilla', 'COOP MEGAS WRAPS', '8 stk', 'Tortilla', true],
+  // Word matches of another type: the app asks about them too.
+  ['salat', 'ISBERGSALAT', '', 'Salat', true],
+  ['salat', 'REKESALAT', '', 'Ferdigsalat', false],
+  ['salat', 'ITALIENSK SALAT', '', 'Ferdigsalat', false],
+  ['tomater', 'KLASETOMAT', '', 'Tomat', true],
+  ['tomater', 'Coop Hakkede tomater', '', 'Hermetiske tomater / tomatsaus', false],
+  ['tomater', 'MAKRELL I TOMAT', '', 'Makrell', false],
+  ['brød', 'LEKSANDS KNEKKEBRØD', '', 'Knekkebrød', false],
+  ['poteter', 'FÅRIKÅL M/POTETER', '', 'Fårikålkjøtt', false],
+  ['bananer', 'BANAN & JORDBÆR SMOOTHIE 10PK', '', 'Smoothie', false],
 ]
 
 const key = process.env.TYPESAFE_API_KEY
@@ -84,11 +99,11 @@ if (!key) throw new Error('TYPESAFE_API_KEY is not set (node --env-file=.env ...
 // A: the hook's question (same / related / unrelated, P(same)). B: the same judgment as a
 // Noul (probability of yes). Run with `--noul` to compare.
 const nouls = process.argv.includes('--noul')
-function noulQuestion(name, heading, description, typeName) {
-  const q = matchQuestion(name, heading, description, typeName)
+function noulQuestion(name, itemType, heading, description, typeName) {
+  const q = matchQuestion(name, itemType, heading, description, typeName)
   return {
     type: 'noul',
-    instructions: q.instructions.replace(/How does it relate to the list item "(.*)"\?$/, 'Is it what a shopper means by the list item "$1"?'),
+    instructions: q.instructions.replace(/How does it relate to the list item "([^"]*)" \(a ([^)]*)\)\?$/, 'Is it what a shopper means by the list item "$1" (a $2)?'),
     criteria: { true: q.criteria.same, false: `${q.criteria.related}; or ${q.criteria.unrelated}` },
   }
 }
@@ -102,11 +117,14 @@ for (const [variant, [question, prob]] of Object.entries(VARIANTS)) {
   let right = 0
   let tokens = 0
   for (const [item, cases] of byItem) {
-    const questions = Object.fromEntries(cases.map((c, i) => ['o' + i, question(item, c[1], c[2], c[3])]))
+    const type = TYPES.find((t) => t.name === cases[0][3])
+    if (!type) throw new Error(`no product type named ${cases[0][3]}`)
+    const itemType = typeLabel(type)
+    const questions = Object.fromEntries(cases.map((c, i) => ['o' + i, question(item, itemType, c[1], c[2], c[3])]))
     const res = await fetch('https://api.typesafe.ai/v1/systemone', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
-      body: JSON.stringify({ state: `Norwegian shopping list item: "${item}"`, model: 'jev-latest', questions }),
+      body: JSON.stringify({ state: matchState(item, itemType), model: 'jev-latest', questions }),
     })
     if (!res.ok) throw new Error(`Jev HTTP ${res.status}: ${await res.text()}`)
     const { answers, usage } = await res.json()
