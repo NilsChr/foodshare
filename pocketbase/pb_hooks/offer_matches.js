@@ -43,8 +43,8 @@ function confirmedOffers(item) {
 
 // Sets `offer_matches` on an item (not saved): the offers of its type in its group's stores
 // that Jev confirms. Returns false when Jev could not be asked; the item is then left as is
-// and the daily cron tries again.
-function matchItem(app, item, timeout) {
+// and the daily cron tries again. Adds the Jev input tokens used to `usage.tokens` when given.
+function matchItem(app, item, timeout, usage) {
   const types = require(`${__hooks}/product_types.js`)
   const type = item.getString("product_type")
   if (!type || type === "none") {
@@ -75,7 +75,9 @@ function matchItem(app, item, timeout) {
     })
     let answers
     try {
-      answers = types.askJev(`Norwegian shopping list item: "${name}"`, questions, timeout)
+      const res = types.askJev(`Norwegian shopping list item: "${name}"`, questions, timeout)
+      answers = res.answers
+      if (usage) usage.tokens += res.tokens
     } catch (err) {
       app.logger().warn("offer match check failed", "name", name, "error", String(err))
       return false
@@ -101,13 +103,13 @@ function matchItem(app, item, timeout) {
 // Brings `offer_matches` up to date on open items in groups with stores: after new offers,
 // a type change, or a failed check. Only pairs not in the cache cost a Jev request.
 // Returns how many items changed.
-function backfillMatches(app, deadline) {
+function backfillMatches(app, deadline, usage) {
   let done = 0
   const todo = app.findRecordsByFilter("items", "product_type != '' && checked = false && space.chains:length > 0", "-created", 500, 0)
   for (const item of todo) {
     if (Date.now() > deadline) break
     const before = JSON.stringify(confirmedOffers(item))
-    if (!matchItem(app, item, 20)) break
+    if (!matchItem(app, item, 20, usage)) break
     if (JSON.stringify(confirmedOffers(item)) === before) continue
     app.save(item)
     done++

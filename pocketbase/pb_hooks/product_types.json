@@ -3,6 +3,7 @@
  "types": [
   {
    "key": "chicken_breast",
+   "group": "meat",
    "name": "Kyllingfilet",
    "aliases": [
     "kyllingfilet",
@@ -14,6 +15,7 @@
   },
   {
    "key": "chicken_whole",
+   "group": "meat",
    "name": "Kylling",
    "aliases": [
     "hel kylling",
@@ -24,6 +26,7 @@
   },
   {
    "key": "chicken_wings",
+   "group": "meat",
    "name": "Kyllingvinger",
    "aliases": [
     "kyllingvinger",
@@ -32,6 +35,7 @@
   },
   {
    "key": "pork_neck",
+   "group": "meat",
    "name": "Svinenakke / nakkekotelett",
    "aliases": [
     "nakkekotelett",
@@ -42,6 +46,7 @@
   },
   {
    "key": "pork_chop",
+   "group": "meat",
    "name": "Svinekotelett",
    "aliases": [
     "svinekotelett",
@@ -55,6 +60,7 @@
   },
   {
    "key": "pork_tenderloin",
+   "group": "meat",
    "name": "Svineindrefilet",
    "aliases": [
     "svineindrefilet",
@@ -64,6 +70,7 @@
   },
   {
    "key": "pork_sirloin",
+   "group": "meat",
    "name": "Svineytrefilet",
    "aliases": [
     "svineytrefilet",
@@ -77,6 +84,7 @@
   },
   {
    "key": "pork_ribs",
+   "group": "meat",
    "name": "Spareribs",
    "aliases": [
     "spareribs",
@@ -89,6 +97,7 @@
   },
   {
    "key": "bacon",
+   "group": "meat",
    "name": "Bacon",
    "aliases": [
     "bacon"
@@ -96,6 +105,7 @@
   },
   {
    "key": "ground_beef",
+   "group": "meat",
    "name": "Kjøttdeig",
    "aliases": [
     "kjøttdeig",
@@ -105,6 +115,7 @@
   },
   {
    "key": "beef_steak",
+   "group": "meat",
    "name": "Biff",
    "aliases": [
     "entrecote",
@@ -124,6 +135,7 @@
   },
   {
    "key": "beef_tenderloin",
+   "group": "meat",
    "name": "Indrefilet av storfe",
    "aliases": [
     "indrefilet storfe",
@@ -133,6 +145,7 @@
   },
   {
    "key": "burger_patty",
+   "group": "meat",
    "name": "Hamburger",
    "aliases": [
     "hamburger",
@@ -156,6 +169,7 @@
   },
   {
    "key": "sausage",
+   "group": "meat",
    "name": "Pølse",
    "aliases": [
     "grillpølse",
@@ -171,6 +185,7 @@
   },
   {
    "key": "ham",
+   "group": "meat",
    "name": "Skinke",
    "aliases": [
     "skinke",
@@ -184,6 +199,7 @@
   },
   {
    "key": "lamb",
+   "group": "meat",
    "name": "Lam",
    "aliases": [
     "lammelår",
@@ -205,6 +221,7 @@
   },
   {
    "key": "cured_meat",
+   "group": "meat",
    "name": "Spekemat",
    "aliases": [
     "salami",
@@ -221,6 +238,7 @@
   },
   {
    "key": "meatballs",
+   "group": "meat",
    "name": "Kjøttkaker",
    "aliases": [
     "kjøttkaker",
@@ -233,6 +251,7 @@
   },
   {
    "key": "salmon",
+   "group": "fish",
    "name": "Laks",
    "aliases": [
     "laksefilet",
@@ -248,6 +267,7 @@
   },
   {
    "key": "cod",
+   "group": "fish",
    "name": "Torsk",
    "aliases": [
     "torskefilet",
@@ -257,6 +277,7 @@
   },
   {
    "key": "shrimp",
+   "group": "fish",
    "name": "Reker",
    "aliases": [
     "reker",
@@ -267,6 +288,7 @@
   },
   {
    "key": "mackerel",
+   "group": "fish",
    "name": "Makrell",
    "aliases": [
     "makrell",
@@ -278,6 +300,7 @@
   },
   {
    "key": "herring",
+   "group": "fish",
    "name": "Sild",
    "aliases": [
     "sild",
@@ -294,6 +317,7 @@
   },
   {
    "key": "trout",
+   "group": "fish",
    "name": "Ørret",
    "aliases": [
     "ørret",
@@ -302,6 +326,7 @@
   },
   {
    "key": "tuna",
+   "group": "fish",
    "name": "Tunfisk",
    "aliases": [
     "tunfisk"
@@ -309,6 +334,7 @@
   },
   {
    "key": "fish_cakes",
+   "group": "fish",
    "name": "Fiskekaker",
    "aliases": [
     "fiskekaker",
@@ -325,6 +351,7 @@
   },
   {
    "key": "shellfish_other",
+   "group": "fish",
    "name": "Skalldyr",
    "aliases": [
     "krabbe",
@@ -335,6 +362,7 @@
   },
   {
    "key": "cheese_yellow",
+   "group": "dairy_eggs",
    "name": "Gulost",
    "aliases": [
     "gulost",
@@ -348,6 +376,7 @@
   },
   {
    "key": "cheese_white",
+   "group": "dairy_eggs",
    "name": "Hvit ost",
    "aliases": [
     "apetina",
@@ -362,6 +391,7 @@
   },
   {
    "key": "cheese_brown",
+   "group": "dairy_eggs",
    "name": "Brunost",
    "aliases": [
     "brunost",
@@ -371,6 +401,7 @@
   },
   {
    "key": "cream_cheese",
+   "group": "dairy_eggs",
    "name": "Kremost",
    "aliases": [
     "kremost",
@@ -380,6 +411,7 @@
   },
   {
    "key": "milk",
+   "group": "dairy_eggs",
    "name": "Melk",
    "aliases": [
     "lettmelk",
@@ -391,6 +423,7 @@
   },
   {
    "key": "yoghurt",
+   "group": "dairy_eggs",
    "name": "Yoghurt",
    "aliases": [
     "yoghurt",
@@ -406,6 +439,7 @@
   },
   {
    "key": "cream",
+   "group": "dairy_eggs",
    "name": "Fløte",
    "aliases": [
     "kremfløte",
@@ -415,6 +449,7 @@
   },
   {
    "key": "butter",
+   "group": "dairy_eggs",
    "name": "Smør og margarin",
    "aliases": [
     "smør",
@@ -426,6 +461,7 @@
   },
   {
    "key": "eggs",
+   "group": "dairy_eggs",
    "name": "Egg",
    "aliases": [
     "gårdsegg",
@@ -435,6 +471,7 @@
   },
   {
    "key": "ice_cream",
+   "group": "snacks",
    "name": "Iskrem",
    "aliases": [
     "krone is",
@@ -448,6 +485,7 @@
   },
   {
    "key": "tomato",
+   "group": "vegetables",
    "name": "Tomat",
    "aliases": [
     "piccolotomater",
@@ -461,6 +499,7 @@
   },
   {
    "key": "cucumber",
+   "group": "vegetables",
    "name": "Agurk",
    "aliases": [
     "agurk",
@@ -469,6 +508,7 @@
   },
   {
    "key": "lettuce",
+   "group": "vegetables",
    "name": "Salat",
    "aliases": [
     "isbergsalat",
@@ -484,6 +524,7 @@
   },
   {
    "key": "potato",
+   "group": "vegetables",
    "name": "Potet",
    "aliases": [
     "bakepoteter",
@@ -496,6 +537,7 @@
   },
   {
    "key": "carrot",
+   "group": "vegetables",
    "name": "Gulrot",
    "aliases": [
     "gulrøtter",
@@ -505,6 +547,7 @@
   },
   {
    "key": "onion",
+   "group": "vegetables",
    "name": "Løk",
    "aliases": [
     "rødløk",
@@ -516,6 +559,7 @@
   },
   {
    "key": "garlic",
+   "group": "vegetables",
    "name": "Hvitløk",
    "aliases": [
     "hvitløk"
@@ -523,6 +567,7 @@
   },
   {
    "key": "broccoli",
+   "group": "vegetables",
    "name": "Brokkoli",
    "aliases": [
     "brokkolini",
@@ -531,6 +576,7 @@
   },
   {
    "key": "cauliflower",
+   "group": "vegetables",
    "name": "Blomkål",
    "aliases": [
     "norsk blomkål",
@@ -539,6 +585,7 @@
   },
   {
    "key": "cabbage",
+   "group": "vegetables",
    "name": "Kål",
    "aliases": [
     "spisskål",
@@ -553,6 +600,7 @@
   },
   {
    "key": "pepper_bell",
+   "group": "vegetables",
    "name": "Paprika",
    "aliases": [
     "paprika"
@@ -560,6 +608,7 @@
   },
   {
    "key": "mushroom",
+   "group": "vegetables",
    "name": "Sopp",
    "aliases": [
     "sjampinjong",
@@ -573,6 +622,7 @@
   },
   {
    "key": "avocado",
+   "group": "fruit",
    "name": "Avokado",
    "aliases": [
     "avokado",
@@ -581,6 +631,7 @@
   },
   {
    "key": "banana",
+   "group": "fruit",
    "name": "Banan",
    "aliases": [
     "bananer",
@@ -589,6 +640,7 @@
   },
   {
    "key": "apple",
+   "group": "fruit",
    "name": "Eple",
    "aliases": [
     "epler",
@@ -597,6 +649,7 @@
   },
   {
    "key": "citrus",
+   "group": "fruit",
    "name": "Sitrusfrukt",
    "aliases": [
     "appelsiner",
@@ -610,6 +663,7 @@
   },
   {
    "key": "grapes",
+   "group": "fruit",
    "name": "Druer",
    "aliases": [
     "druer"
@@ -617,6 +671,7 @@
   },
   {
    "key": "strawberries",
+   "group": "fruit",
    "name": "Jordbær",
    "aliases": [
     "jordbær",
@@ -625,6 +680,7 @@
   },
   {
    "key": "blueberries",
+   "group": "fruit",
    "name": "Blåbær",
    "aliases": [
     "blåbær"
@@ -632,6 +688,7 @@
   },
   {
    "key": "raspberries",
+   "group": "fruit",
    "name": "Bringebær",
    "aliases": [
     "bringebær"
@@ -639,6 +696,7 @@
   },
   {
    "key": "melon",
+   "group": "fruit",
    "name": "Melon",
    "aliases": [
     "hel vannmelon",
@@ -650,6 +708,7 @@
   },
   {
    "key": "stone_fruit",
+   "group": "fruit",
    "name": "Steinfrukt",
    "aliases": [
     "nektarin",
@@ -662,6 +721,7 @@
   },
   {
    "key": "cherries",
+   "group": "fruit",
    "name": "Moreller",
    "aliases": [
     "norske moreller",
@@ -671,6 +731,7 @@
   },
   {
    "key": "mango",
+   "group": "fruit",
    "name": "Mango",
    "aliases": [
     "pakistansk mango",
@@ -679,6 +740,7 @@
   },
   {
    "key": "pear",
+   "group": "fruit",
    "name": "Pære",
    "aliases": [
     "pærer",
@@ -687,6 +749,7 @@
   },
   {
    "key": "pineapple",
+   "group": "fruit",
    "name": "Ananas",
    "aliases": [
     "ananas"
@@ -694,6 +757,7 @@
   },
   {
    "key": "asparagus",
+   "group": "vegetables",
    "name": "Asparges",
    "aliases": [
     "asparges"
@@ -701,6 +765,7 @@
   },
   {
    "key": "squash",
+   "group": "vegetables",
    "name": "Squash",
    "aliases": [
     "squash",
@@ -711,6 +776,7 @@
   },
   {
    "key": "corn",
+   "group": "vegetables",
    "name": "Mais",
    "aliases": [
     "maiskolbe",
@@ -720,6 +786,7 @@
   },
   {
    "key": "radish",
+   "group": "vegetables",
    "name": "Reddik",
    "aliases": [
     "norsk reddik",
@@ -728,6 +795,7 @@
   },
   {
    "key": "leek",
+   "group": "vegetables",
    "name": "Purre",
    "aliases": [
     "purre"
@@ -735,6 +803,7 @@
   },
   {
    "key": "spinach",
+   "group": "vegetables",
    "name": "Spinat",
    "aliases": [
     "spinat",
@@ -743,6 +812,7 @@
   },
   {
    "key": "peas_beans_fresh",
+   "group": "vegetables",
    "name": "Erter og bønner",
    "aliases": [
     "sukkererter",
@@ -753,6 +823,7 @@
   },
   {
    "key": "bread",
+   "group": "bakery",
    "name": "Brød",
    "aliases": [
     "grovbrød",
@@ -772,6 +843,7 @@
   },
   {
    "key": "burger_bun",
+   "group": "bakery",
    "name": "Burgerbrød",
    "aliases": [
     "burgerbrød",
@@ -782,6 +854,7 @@
   },
   {
    "key": "hotdog_bun",
+   "group": "bakery",
    "name": "Pølsebrød",
    "aliases": [
     "pølsebrød",
@@ -794,6 +867,7 @@
   },
   {
    "key": "focaccia",
+   "group": "bakery",
    "name": "Focaccia",
    "aliases": [
     "focaccia",
@@ -802,6 +876,7 @@
   },
   {
    "key": "pasta",
+   "group": "pantry",
    "name": "Pasta",
    "aliases": [
     "spaghetti",
@@ -814,6 +889,7 @@
   },
   {
    "key": "rice",
+   "group": "pantry",
    "name": "Ris",
    "aliases": [
     "jasminris",
@@ -824,6 +900,7 @@
   },
   {
    "key": "flour",
+   "group": "pantry",
    "name": "Mel",
    "aliases": [
     "hvetemel",
@@ -834,6 +911,7 @@
   },
   {
    "key": "tortilla",
+   "group": "bakery",
    "name": "Tortilla",
    "aliases": [
     "tortilla",
@@ -848,6 +926,7 @@
   },
   {
    "key": "crispbread",
+   "group": "bakery",
    "name": "Knekkebrød",
    "aliases": [
     "knekkebrød"
@@ -855,6 +934,7 @@
   },
   {
    "key": "oats",
+   "group": "pantry",
    "name": "Havregryn",
    "aliases": [
     "havregryn",
@@ -865,6 +945,7 @@
   },
   {
    "key": "pizza_base",
+   "group": "bakery",
    "name": "Pizzabunn",
    "aliases": [
     "pizzabunn"
@@ -872,6 +953,7 @@
   },
   {
    "key": "tomato_canned",
+   "group": "pantry",
    "name": "Hermetiske tomater / tomatsaus",
    "aliases": [
     "finhakkede tomater",
@@ -884,6 +966,7 @@
   },
   {
    "key": "mayonnaise",
+   "group": "pantry",
    "name": "Majones",
    "aliases": [
     "majones",
@@ -892,6 +975,7 @@
   },
   {
    "key": "ketchup",
+   "group": "pantry",
    "name": "Ketchup",
    "aliases": [
     "ketchup"
@@ -899,6 +983,7 @@
   },
   {
    "key": "mustard",
+   "group": "pantry",
    "name": "Sennep",
    "aliases": [
     "sennep"
@@ -906,6 +991,7 @@
   },
   {
    "key": "dressing",
+   "group": "pantry",
    "name": "Dressing",
    "aliases": [
     "burgerdressing",
@@ -916,6 +1002,7 @@
   },
   {
    "key": "cooking_oil",
+   "group": "pantry",
    "name": "Matolje",
    "aliases": [
     "olivenolje",
@@ -925,6 +1012,7 @@
   },
   {
    "key": "sugar",
+   "group": "pantry",
    "name": "Sukker",
    "aliases": [
     "sukker",
@@ -934,6 +1022,7 @@
   },
   {
    "key": "jam",
+   "group": "pantry",
    "name": "Syltetøy",
    "aliases": [
     "jordbærsyltetøy",
@@ -948,6 +1037,7 @@
   },
   {
    "key": "spices",
+   "group": "pantry",
    "name": "Krydder",
    "aliases": [
     "krydder",
@@ -958,6 +1048,7 @@
   },
   {
    "key": "sauce",
+   "group": "pantry",
    "name": "Saus",
    "aliases": [
     "bbq saus",
@@ -969,6 +1060,7 @@
   },
   {
    "key": "nuts",
+   "group": "snacks",
    "name": "Nøtter",
    "aliases": [
     "cashewnøtter",
@@ -980,6 +1072,7 @@
   },
   {
    "key": "coffee",
+   "group": "pantry",
    "name": "Kaffe",
    "aliases": [
     "filterkaffe",
@@ -991,6 +1084,7 @@
   },
   {
    "key": "tea",
+   "group": "pantry",
    "name": "Te",
    "aliases": [
     "teposer",
@@ -999,6 +1093,7 @@
   },
   {
    "key": "honey",
+   "group": "pantry",
    "name": "Honning",
    "aliases": [
     "honning"
@@ -1006,6 +1101,7 @@
   },
   {
    "key": "legumes",
+   "group": "pantry",
    "name": "Bønner og linser",
    "aliases": [
     "kikerter",
@@ -1016,6 +1112,7 @@
   },
   {
    "key": "pizza_frozen",
+   "group": "meals",
    "name": "Frossenpizza",
    "aliases": [
     "grandiosa",
@@ -1026,6 +1123,7 @@
   },
   {
    "key": "fries",
+   "group": "meals",
    "name": "Pommes frites",
    "aliases": [
     "pommes frites",
@@ -1036,6 +1134,7 @@
   },
   {
    "key": "prepared_salad",
+   "group": "vegetables",
    "name": "Ferdigsalat",
    "aliases": [
     "potetsalat",
@@ -1054,6 +1153,7 @@
   },
   {
    "key": "ready_meal",
+   "group": "meals",
    "name": "Ferdigmat",
    "aliases": [
     "ferdigmat",
@@ -1066,6 +1166,7 @@
   },
   {
    "key": "pancakes",
+   "group": "meals",
    "name": "Pannekaker",
    "aliases": [
     "pannekaker",
@@ -1078,6 +1179,7 @@
   },
   {
    "key": "pie",
+   "group": "meals",
    "name": "Pai",
    "aliases": [
     "pai",
@@ -1086,6 +1188,7 @@
   },
   {
    "key": "cake",
+   "group": "bakery",
    "name": "Kake",
    "aliases": [
     "kaker",
@@ -1106,6 +1209,7 @@
   },
   {
    "key": "soda",
+   "group": "drinks",
    "name": "Brus",
    "aliases": [
     "coca cola",
@@ -1127,6 +1231,7 @@
   },
   {
    "key": "water_bottled",
+   "group": "drinks",
    "name": "Vann på flaske",
    "aliases": [
     "farris",
@@ -1139,6 +1244,7 @@
   },
   {
    "key": "juice",
+   "group": "drinks",
    "name": "Juice",
    "aliases": [
     "nypresset appelsinjuice",
@@ -1152,6 +1258,7 @@
   },
   {
    "key": "beer_alcohol_free",
+   "group": "drinks",
    "name": "Alkoholfritt øl",
    "aliases": [
     "clausthaler",
@@ -1164,6 +1271,7 @@
   },
   {
    "key": "energy_drink",
+   "group": "drinks",
    "name": "Energidrikk",
    "aliases": [
     "battery",
@@ -1175,6 +1283,7 @@
   },
   {
    "key": "smoothie",
+   "group": "drinks",
    "name": "Smoothie",
    "aliases": [
     "smoothie",
@@ -1183,6 +1292,7 @@
   },
   {
    "key": "iced_tea",
+   "group": "drinks",
    "name": "Iste",
    "aliases": [
     "iste",
@@ -1191,6 +1301,7 @@
   },
   {
    "key": "squash_drink",
+   "group": "drinks",
    "name": "Saft",
    "aliases": [
     "saft",
@@ -1203,6 +1314,7 @@
   },
   {
    "key": "chips",
+   "group": "snacks",
    "name": "Potetchips",
    "aliases": [
     "sørlandschips",
@@ -1215,6 +1327,7 @@
   },
   {
    "key": "chocolate",
+   "group": "snacks",
    "name": "Sjokolade",
    "aliases": [
     "sjokoladeplater",
@@ -1226,6 +1339,7 @@
   },
   {
    "key": "candy",
+   "group": "snacks",
    "name": "Godteri",
    "aliases": [
     "seigmenn",
@@ -1248,6 +1362,7 @@
   },
   {
    "key": "biscuits",
+   "group": "snacks",
    "name": "Kjeks",
    "aliases": [
     "cookies",
@@ -1267,6 +1382,7 @@
   },
   {
    "key": "toilet_paper",
+   "group": "household",
    "name": "Toalettpapir",
    "aliases": [
     "toalettpapir",
@@ -1277,6 +1393,7 @@
   },
   {
    "key": "sunscreen",
+   "group": "household",
    "name": "Solkrem",
    "aliases": [
     "sun lotion",
@@ -1286,6 +1403,7 @@
   },
   {
    "key": "diapers",
+   "group": "household",
    "name": "Bleier",
    "aliases": [
     "bleier",
@@ -1294,6 +1412,7 @@
   },
   {
    "key": "cut_flowers",
+   "group": "other",
    "name": "Blomster",
    "aliases": [
     "krysantemum",
@@ -1310,6 +1429,7 @@
   },
   {
    "key": "cleaning",
+   "group": "household",
    "name": "Rengjøring",
    "aliases": [
     "oppvaskmiddel",
@@ -1327,6 +1447,7 @@
   },
   {
    "key": "first_aid",
+   "group": "household",
    "name": "Apotekvarer",
    "aliases": [
     "plaster",
@@ -1335,6 +1456,7 @@
   },
   {
    "key": "charcoal",
+   "group": "other",
    "name": "Grillkull",
    "aliases": [
     "grillkull",
@@ -1345,6 +1467,7 @@
   },
   {
    "key": "meat_skewers",
+   "group": "meat",
    "name": "Grillspyd",
    "aliases": [
     "kyllingspyd",
@@ -1358,6 +1481,7 @@
   },
   {
    "key": "personal_care",
+   "group": "household",
    "name": "Personlig pleie",
    "aliases": [
     "face control cream",
@@ -1371,6 +1495,7 @@
   },
   {
    "key": "pork_belly",
+   "group": "meat",
    "name": "Ribbe",
    "aliases": [
     "ribbe",
@@ -1390,6 +1515,7 @@
   },
   {
    "key": "cured_lamb_ribs",
+   "group": "meat",
    "name": "Pinnekjøtt",
    "aliases": [
     "pinnekjøtt",
@@ -1401,6 +1527,7 @@
   },
   {
    "key": "turkey",
+   "group": "meat",
    "name": "Kalkun",
    "aliases": [
     "kalkun",
@@ -1418,6 +1545,7 @@
   },
   {
    "key": "ground_pork",
+   "group": "meat",
    "name": "Medisterdeig",
    "aliases": [
     "medisterdeig",
@@ -1428,6 +1556,7 @@
   },
   {
    "key": "lutefisk",
+   "group": "fish",
    "name": "Lutefisk",
    "aliases": [
     "lutefisk",
@@ -1437,6 +1566,7 @@
   },
   {
    "key": "rice_porridge",
+   "group": "dairy_eggs",
    "name": "Risgrøt",
    "aliases": [
     "risgrøt",
@@ -1447,6 +1577,7 @@
   },
   {
    "key": "mutton_stew_meat",
+   "group": "meat",
    "name": "Fårikålkjøtt",
    "aliases": [
     "fårikål",
@@ -1457,6 +1588,7 @@
   },
   {
    "key": "grilling_cheese",
+   "group": "dairy_eggs",
    "name": "Grillost",
    "aliases": [
     "grillost",
@@ -1467,6 +1599,7 @@
   },
   {
    "key": "flatbread",
+   "group": "bakery",
    "name": "Lefse",
    "aliases": [
     "lefse",
@@ -1480,6 +1613,7 @@
   },
   {
    "key": "liver_pate",
+   "group": "meat",
    "name": "Leverpostei",
    "aliases": [
     "leverpostei",
@@ -1489,6 +1623,7 @@
   },
   {
    "key": "fish_roe_spread",
+   "group": "fish",
    "name": "Kaviar",
    "aliases": [
     "kaviar",
@@ -1498,6 +1633,7 @@
   },
   {
    "key": "sour_cream",
+   "group": "dairy_eggs",
    "name": "Rømme",
    "aliases": [
     "rømme",
@@ -1511,6 +1647,7 @@
   },
   {
    "key": "soup",
+   "group": "meals",
    "name": "Suppe",
    "aliases": [
     "suppe",

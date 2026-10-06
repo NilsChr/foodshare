@@ -16,8 +16,10 @@
 onRecordCreateRequest((e) => {
   const types = require(`${__hooks}/product_types.js`)
   if (types.comparesOffers(e.app, e.record.getString("space"))) {
-    e.record.set("product_type", types.resolveName(e.app, e.record.getString("name")))
-    require(`${__hooks}/offer_matches.js`).matchItem(e.app, e.record, 5)
+    const usage = { tokens: 0 }
+    e.record.set("product_type", types.resolveName(e.app, e.record.getString("name"), usage))
+    require(`${__hooks}/offer_matches.js`).matchItem(e.app, e.record, 5, usage)
+    if (usage.tokens) e.app.logger().info("item matched", "name", e.record.getString("name"), "tokens", usage.tokens)
   }
   e.next()
 }, "items")
@@ -27,9 +29,11 @@ onRecordUpdateRequest((e) => {
   if (name.trim().toLowerCase() !== e.record.original().getString("name").trim().toLowerCase()) {
     const types = require(`${__hooks}/product_types.js`)
     const compares = types.comparesOffers(e.app, e.record.getString("space"))
-    e.record.set("product_type", compares ? types.resolveName(e.app, name) : "")
+    const usage = { tokens: 0 }
+    e.record.set("product_type", compares ? types.resolveName(e.app, name, usage) : "")
     e.record.set("offer_matches", null)
-    if (compares) require(`${__hooks}/offer_matches.js`).matchItem(e.app, e.record, 5)
+    if (compares) require(`${__hooks}/offer_matches.js`).matchItem(e.app, e.record, 5, usage)
+    if (usage.tokens) e.app.logger().info("item matched", "name", name, "tokens", usage.tokens)
   }
   e.next()
 }, "items")

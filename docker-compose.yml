@@ -18,6 +18,9 @@ services:
       <<: *local-env
       # Offer categories (optional); compose reads it from the root .env.
       TYPESAFE_API_KEY: ${TYPESAFE_API_KEY:-}
+      # No nightly offers sync and classify locally (setup syncs once on start, without Jev).
+      # Classify by hand: POST /api/foodshare/offers-classify. OFFERS_CRON=on to test the cron.
+      OFFERS_CRON: ${OFFERS_CRON:-off}
     ports: ["${PB_PORT:-8090}:8080"]
     volumes:
       - ./pocketbase/pb_data:/pb/pb_data

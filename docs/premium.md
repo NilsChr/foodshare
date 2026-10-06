@@ -8,8 +8,8 @@ The AI features use TypeSafe AI's Jev classifier. Its cost is low and mostly fix
 
 | What | When | Measured cost |
 |---|---|---|
-| Classify offers (store section + product type) | Once per new offer, all chains | ~5000 input tokens each; about $0.26 per week for ~1200 offers |
-| Classify a list item name | Once per new name, shared by all users (cache in `product_names`) | ~5000 input tokens, about $0.0002 per new name; 10 000 names ≈ $2 in total |
+| Classify offers (store section + product type) | Once per new offer, all chains | ~2300 input tokens each (two requests: group, then type); about $0.12 per week for ~1200 offers |
+| Classify a list item name and check its offers | Once per new name, shared by all users (caches `product_names`, `offer_matches`) | ~2000–3000 input tokens, about $0.0001 per new name; 10 000 names ≈ $1 in total |
 
 Repeated adds of a known name, names found in the type list, searching offers and showing matches cost nothing. So premium is about the value to the user, not about covering AI cost. Cost only becomes a concern with abuse (see "Limits").
 

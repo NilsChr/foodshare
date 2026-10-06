@@ -8,10 +8,12 @@
 // requests to the flyer API; classifying then sends only what is new to Jev, for at most
 // 20 minutes (a whole new week of ~1200 offers takes ~5). New list items are checked when
 // they are added; the next run catches up on any check that failed then.
+// OFFERS_CRON=off (env, set by docker-compose locally) leaves the cron out, so a local
+// PocketBase never sends offers to Jev on its own.
 // POST /api/foodshare/offers-sync      (superuser)  -> { fetched, created, updated, deleted }
-// POST /api/foodshare/offers-classify  (superuser)  -> { classified, remaining, items, matched, stopped }
+// POST /api/foodshare/offers-classify  (superuser)  -> { classified, remaining, items, matched, tokens, stopped }
 
-cronAdd("offers_sync", "17 4 * * *", () => {
+if ($os.getenv("OFFERS_CRON") !== "off") cronAdd("offers_sync", "17 4 * * *", () => {
   try {
     const result = require(`${__hooks}/offers_sync.js`).syncOffers($app)
     $app.logger().info("offers sync", "fetched", result.fetched, "created", result.created, "updated", result.updated, "deleted", result.deleted)
@@ -20,7 +22,7 @@ cronAdd("offers_sync", "17 4 * * *", () => {
   }
   try {
     const result = require(`${__hooks}/offers_classify.js`).classifyOffers($app, 1200)
-    $app.logger().info("offers classify", "classified", result.classified, "remaining", result.remaining, "items", result.items, "matched", result.matched, "stopped", result.stopped)
+    $app.logger().info("offers classify", "classified", result.classified, "remaining", result.remaining, "items", result.items, "matched", result.matched, "tokens", result.tokens, "stopped", result.stopped)
   } catch (err) {
     $app.logger().error("offers classify failed", "error", String(err))
   }

@@ -1,7 +1,8 @@
 // Measures the Jev prompt in pb_hooks/offer_matches.js on fixed list item / flyer offer pairs.
 // Run after changing the prompt or MIN_P:
 //   node --env-file=.env pocketbase/test-offer-matches.mjs
-// Prints each wrong answer and the accuracy; exits 1 below 85%. About 25 requests.
+// Prints each wrong answer, the accuracy and the input tokens; exits 1 below 85%. About 25
+// requests (50 with --noul, which also measures the same judgment as a Noul question).
 //
 // Cases come from real flyers (October 2026). `same`: should the item show the offer?
 // Offers sharing words with the item are matched by the app without Jev, so the cases are
@@ -80,24 +81,44 @@ const CASES = [
 const key = process.env.TYPESAFE_API_KEY
 if (!key) throw new Error('TYPESAFE_API_KEY is not set (node --env-file=.env ...)')
 
+// A: the hook's question (same / related / unrelated, P(same)). B: the same judgment as a
+// Noul (probability of yes). Run with `--noul` to compare.
+const nouls = process.argv.includes('--noul')
+function noulQuestion(name, heading, description, typeName) {
+  const q = matchQuestion(name, heading, description, typeName)
+  return {
+    type: 'noul',
+    instructions: q.instructions.replace(/How does it relate to the list item "(.*)"\?$/, 'Is it what a shopper means by the list item "$1"?'),
+    criteria: { true: q.criteria.same, false: `${q.criteria.related}; or ${q.criteria.unrelated}` },
+  }
+}
+const VARIANTS = { choice: [matchQuestion, (a) => a?.probabilities?.same ?? 0] }
+if (nouls) VARIANTS.noul = [noulQuestion, (a) => a?.noul ?? 0]
+
 // One request per item, as the hook sends them.
 const byItem = Map.groupBy(CASES, (c) => c[0])
-let right = 0
-for (const [item, cases] of byItem) {
-  const questions = Object.fromEntries(cases.map((c, i) => ['o' + i, matchQuestion(item, c[1], c[2], c[3])]))
-  const res = await fetch('https://api.typesafe.ai/v1/systemone', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
-    body: JSON.stringify({ state: `Norwegian shopping list item: "${item}"`, model: 'jev-latest', questions }),
-  })
-  if (!res.ok) throw new Error(`Jev HTTP ${res.status}: ${await res.text()}`)
-  const { answers } = await res.json()
-  cases.forEach((c, i) => {
-    const p = answers['o' + i]?.probabilities?.same ?? 0
-    if (p >= MIN_P === c[4]) right++
-    else console.log(`wrong  ${item} ~ ${c[1]}: p=${p.toFixed(2)}, expected ${c[4] ? 'match' : 'no match'}`)
-  })
+let failed = false
+for (const [variant, [question, prob]] of Object.entries(VARIANTS)) {
+  let right = 0
+  let tokens = 0
+  for (const [item, cases] of byItem) {
+    const questions = Object.fromEntries(cases.map((c, i) => ['o' + i, question(item, c[1], c[2], c[3])]))
+    const res = await fetch('https://api.typesafe.ai/v1/systemone', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+      body: JSON.stringify({ state: `Norwegian shopping list item: "${item}"`, model: 'jev-latest', questions }),
+    })
+    if (!res.ok) throw new Error(`Jev HTTP ${res.status}: ${await res.text()}`)
+    const { answers, usage } = await res.json()
+    tokens += usage?.input_tokens ?? 0
+    cases.forEach((c, i) => {
+      const p = prob(answers['o' + i])
+      if (p >= MIN_P === c[4]) right++
+      else console.log(`${variant}: wrong  ${item} ~ ${c[1]}: p=${p.toFixed(2)}, expected ${c[4] ? 'match' : 'no match'}`)
+    })
+  }
+  const accuracy = right / CASES.length
+  console.log(`${variant}: ${right}/${CASES.length} right (${Math.round(accuracy * 100)}%), MIN_P ${MIN_P}, ${tokens} input tokens\n`)
+  if (variant === 'choice' && accuracy < 0.85) failed = true
 }
-const accuracy = right / CASES.length
-console.log(`\n${right}/${CASES.length} right (${Math.round(accuracy * 100)}%), MIN_P ${MIN_P}`)
-process.exit(accuracy >= 0.85 ? 0 : 1)
+process.exit(failed ? 1 : 0)

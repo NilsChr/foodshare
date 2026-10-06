@@ -1,12 +1,13 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 // Classifies flyer offers with TypeSafe AI's Jev model (a classifier: it picks one of the
-// given choices and returns probabilities, no free text), in one request per offer:
+// given choices and returns probabilities, no free text):
 //   category      store section, for filtering offers (the flyer API has none)
 //   product_type  e.g. "coffee", to match list items that share no words with the
 //                 heading (see product_types.js)
 //
-// One request per offer (~300 ms, ~5000 input tokens, most of it the product type list).
+// Two requests per offer (~500 ms): the category goes with the product group question,
+// then the type within the group (classifyProduct in product_types.js).
 // Offers keep their classification across syncs, so after the first run only new offers
 // are sent. Only public flyer text is sent. Without TYPESAFE_API_KEY this does nothing.
 //
@@ -29,48 +30,49 @@ const CRITERIA = {
 }
 
 // Classifies offers missing a category or product type, then list items missing a product
-// type, then checks which offers list items mean (offer_matches.js), until `seconds` have passed. Returns counts. Stops early on rate limits or
-// outages; the next run continues where this one stopped.
+// type, then checks which offers list items mean (offer_matches.js), until `seconds` have
+// passed. Returns counts and the Jev input tokens used (the cost). Stops early on rate
+// limits or outages; the next run continues where this one stopped.
 function classifyOffers(app, seconds) {
   if (!$os.getenv("TYPESAFE_API_KEY")) return { skipped: "TYPESAFE_API_KEY is not set" }
   const types = require(`${__hooks}/product_types.js`)
 
   const deadline = Date.now() + seconds * 1000
-  const result = { classified: 0, remaining: 0, items: 0, matched: 0, stopped: "" }
+  const result = { classified: 0, remaining: 0, items: 0, matched: 0, tokens: 0, stopped: "" }
+  const usage = { tokens: 0 }
   const todo = app.findRecordsByFilter("offers", "category = '' || product_type = ''", "-discount_pct", 0, 0)
-  const questions = {
-    category: {
-      type: "choice",
-      instructions: "Which section of a Norwegian grocery store is this flyer product in?",
-      criteria: CRITERIA,
-    },
-    product: types.productQuestion(),
+  const category = {
+    type: "choice",
+    instructions: "Which section of a Norwegian grocery store is this flyer product in?",
+    criteria: CRITERIA,
   }
   for (const record of todo) {
     if (Date.now() > deadline) break
-    let answers
+    let product
     try {
-      answers = types.askJev((record.getString("heading") + "\n" + record.getString("description")).trim(), questions, 20)
+      product = types.classifyProduct((record.getString("heading") + "\n" + record.getString("description")).trim(), 20, { category: category })
     } catch (err) {
       result.stopped = String(err)
       break
     }
-    const category = (answers.category || {}).choice
-    if (!CRITERIA[category]) {
-      result.stopped = "unexpected answer: " + JSON.stringify(answers).slice(0, 200)
+    usage.tokens += product.tokens
+    const section = (product.answers.category || {}).choice
+    if (!CRITERIA[section]) {
+      result.stopped = "unexpected answer: " + JSON.stringify(product.answers).slice(0, 200)
       break
     }
-    record.set("category", category)
-    record.set("product_type", types.productAnswer(answers.product))
+    record.set("category", section)
+    record.set("product_type", product.type)
     app.save(record)
     result.classified++
   }
   result.remaining = todo.length - result.classified
 
   if (!result.stopped) {
-    result.items = types.backfillItems(app, deadline)
-    result.matched = require(`${__hooks}/offer_matches.js`).backfillMatches(app, deadline)
+    result.items = types.backfillItems(app, deadline, usage)
+    result.matched = require(`${__hooks}/offer_matches.js`).backfillMatches(app, deadline, usage)
   }
+  result.tokens = usage.tokens
   return result
 }
 
