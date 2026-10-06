@@ -1,16 +1,16 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-// Sorts flyer offers into store sections with TypeSafe AI's Jev model (a classifier: it
-// picks one of the given choices and returns probabilities, no free text). The flyer API
-// has no categories, and keyword matching only covered about 45% of offers.
+// Classifies flyer offers with TypeSafe AI's Jev model (a classifier: it picks one of the
+// given choices and returns probabilities, no free text), in one request per offer:
+//   category      store section, for filtering offers (the flyer API has none)
+//   product_type  e.g. "coffee", to match list items that share no words with the
+//                 heading (see product_types.js)
 //
-// One request per offer (~250 ms, ~600 input tokens). Offers keep their category across
-// syncs, so after the first run only new offers are classified. Only public flyer text is
-// sent. Without TYPESAFE_API_KEY this does nothing and offers stay uncategorized.
+// One request per offer (~300 ms, ~5000 input tokens, most of it the product type list).
+// Offers keep their classification across syncs, so after the first run only new offers
+// are sent. Only public flyer text is sent. Without TYPESAFE_API_KEY this does nothing.
 //
 // Plain module (not *.pb.js): loaded with require() from offers_sync.pb.js.
-
-const URL = "https://api.typesafe.ai/v1/systemone"
 
 // Keys match the `offers.category` select values. The first ten are the app's default
 // store sections, so the app can map them onto a group's own sections.
@@ -28,49 +28,46 @@ const CRITERIA = {
   other: "Not food or household: clothes, decorations, tools, toys, pet food, car care",
 }
 
-// Classifies offers without a category, until `seconds` have passed. Returns counts.
-// Stops early on rate limits or outages; the next run continues where this one stopped.
+// Classifies offers missing a category or product type, then list items missing a product
+// type, until `seconds` have passed. Returns counts. Stops early on rate limits or
+// outages; the next run continues where this one stopped.
 function classifyOffers(app, seconds) {
-  const key = $os.getenv("TYPESAFE_API_KEY")
-  if (!key) return { skipped: "TYPESAFE_API_KEY is not set" }
+  if (!$os.getenv("TYPESAFE_API_KEY")) return { skipped: "TYPESAFE_API_KEY is not set" }
+  const types = require(`${__hooks}/product_types.js`)
 
   const deadline = Date.now() + seconds * 1000
-  const result = { classified: 0, remaining: 0, stopped: "" }
-  const todo = app.findRecordsByFilter("offers", "category = ''", "-discount_pct", 0, 0)
+  const result = { classified: 0, remaining: 0, items: 0, stopped: "" }
+  const todo = app.findRecordsByFilter("offers", "category = '' || product_type = ''", "-discount_pct", 0, 0)
+  const questions = {
+    category: {
+      type: "choice",
+      instructions: "Which section of a Norwegian grocery store is this flyer product in?",
+      criteria: CRITERIA,
+    },
+    product: types.productQuestion(),
+  }
   for (const record of todo) {
     if (Date.now() > deadline) break
-    const res = $http.send({
-      url: URL,
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
-      body: JSON.stringify({
-        state: (record.getString("heading") + "\n" + record.getString("description")).trim(),
-        model: "jev-latest",
-        questions: {
-          category: {
-            type: "choice",
-            instructions: "Which section of a Norwegian grocery store is this flyer product in?",
-            criteria: CRITERIA,
-          },
-        },
-      }),
-      timeout: 20,
-    })
-    if (res.statusCode !== 200) {
-      // 401: bad key. 429/529: rate limited or overloaded. Either way, try again next run.
-      result.stopped = "HTTP " + res.statusCode
+    let answers
+    try {
+      answers = types.askJev((record.getString("heading") + "\n" + record.getString("description")).trim(), questions, 20)
+    } catch (err) {
+      result.stopped = String(err)
       break
     }
-    const choice = ((res.json.answers || {}).category || {}).choice
-    if (!CRITERIA[choice]) {
-      result.stopped = "unexpected answer: " + JSON.stringify(res.json).slice(0, 200)
+    const category = (answers.category || {}).choice
+    if (!CRITERIA[category]) {
+      result.stopped = "unexpected answer: " + JSON.stringify(answers).slice(0, 200)
       break
     }
-    record.set("category", choice)
+    record.set("category", category)
+    record.set("product_type", types.productAnswer(answers.product))
     app.save(record)
     result.classified++
   }
   result.remaining = todo.length - result.classified
+
+  if (!result.stopped) result.items = types.backfillItems(app, deadline)
   return result
 }
 

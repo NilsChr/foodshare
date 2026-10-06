@@ -160,6 +160,9 @@ const collections = [
       rel("checked_by", "users"),
       rel("added_by", "users"),
       rel("recipe", "recipes"),
+      // Product type key (pb_hooks/product_types.json) for matching offers; set by the
+      // item_types hook. "none" = no type, "" = not decided yet.
+      text("product_type", { max: 40 }),
       ...timestamps,
     ],
     rules: "member",
@@ -238,6 +241,8 @@ const collections = [
         maxSelect: 1,
         values: ["vegetables", "fruit", "bakery", "meat_fish", "dairy_eggs", "pantry", "frozen", "snacks", "drinks", "household", "other"],
       },
+      // Product type key, as on items; set by offers_classify. "none" = no type, "" = not classified yet.
+      text("product_type", { max: 40 }),
       ...timestamps,
     ],
     indexes: [
@@ -251,6 +256,14 @@ const collections = [
       updateRule: null,
       deleteRule: null,
     },
+  },
+  {
+    // Cache of list item name (lower case) -> product type, shared by all groups so each
+    // name is resolved once. Server-only.
+    name: "product_names",
+    fields: [text("name", { required: true, max: 120 }), text("product_type", { max: 40 }), ...timestamps],
+    indexes: ["CREATE UNIQUE INDEX idx_product_names_name ON product_names (name)"],
+    rules: { listRule: null, viewRule: null, createRule: null, updateRule: null, deleteRule: null },
   },
 ];
 

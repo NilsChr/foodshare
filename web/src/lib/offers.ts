@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { locale } from './i18n'
 import { col, pb, type Chain, type Offer } from './pb'
 
-const OFFER_FIELDS = 'id,chain,heading,description,price,pre_price,discount_pct,size_from,size_to,unit,pieces,image,run_till,category'
+const OFFER_FIELDS = 'id,chain,heading,description,price,pre_price,discount_pct,size_from,size_to,unit,pieces,image,run_till,category,product_type'
 
 /**
  * Every chain, plus this week's offers from the chosen ones. Offers are replaced nightly

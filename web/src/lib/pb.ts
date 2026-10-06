@@ -71,6 +71,8 @@ export interface Item extends RecordModel {
   checked_by: string
   added_by: string
   recipe: string
+  /** Product type key for matching offers ("coffee"), set by the server; "none" or "" when there is none. */
+  product_type: string
 }
 
 export interface Meal extends RecordModel {
@@ -112,6 +114,8 @@ export interface Offer extends RecordModel {
   run_till: string
   /** Store section key (see OFFER_CATEGORIES); empty until classified. */
   category: string
+  /** Product type key, as on items; "none" or "" when there is none. */
+  product_type: string
 }
 
 export const col = {

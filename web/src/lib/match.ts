@@ -3,6 +3,7 @@
 import { locale } from './i18n'
 import type { Category, Item, Offer, PantryItem, Recipe } from './pb'
 
+// Mirrored in pocketbase/pb_hooks/product_types.js (cache keys for product types); keep in step.
 const STOPWORDS = new Set([
   'a', 'an', 'and', 'of', 'the', 'fresh', 'chopped', 'diced', 'sliced', 'large', 'small', 'medium', 'to', 'taste',
   'og', 'med', 'frisk', 'friske', 'hakket', 'stor', 'store', 'liten', 'små', 'pk', 'pakke', 'pakker', 'boks',
@@ -196,14 +197,26 @@ export function indexOffers(offers: Offer[]): OfferIndex {
   return offers.map((offer) => ({ offer, words: tokens(offer.heading) }))
 }
 
-/** Offers whose heading contains every word of the name. Closest headings first, then cheapest. */
-export function offersFor(name: string, index: OfferIndex): Offer[] {
+/**
+ * Offers for a list item: headings containing every word of the name (closest first, then
+ * cheapest), followed by offers of the same product type that share no words, cheapest first
+ * ("kaffe" is type coffee, like "ALI FILTERMALT").
+ */
+export function offersFor(name: string, index: OfferIndex, productType = ''): Offer[] {
   const words = tokens(name)
-  if (!words.length) return []
-  return index
-    .filter((e) => words.every((w) => e.words.some((o) => offerWordMatch(w, o))))
-    .sort((a, b) => a.words.length - b.words.length || a.offer.price - b.offer.price)
+  const byWords = words.length
+    ? index
+      .filter((e) => words.every((w) => e.words.some((o) => offerWordMatch(w, o))))
+      .sort((a, b) => a.words.length - b.words.length || a.offer.price - b.offer.price)
+      .map((e) => e.offer)
+    : []
+  if (!productType || productType === 'none') return byWords
+  const seen = new Set(byWords.map((o) => o.id))
+  const byType = index
+    .filter((e) => e.offer.product_type === productType && !seen.has(e.offer.id))
     .map((e) => e.offer)
+    .sort((a, b) => a.price - b.price)
+  return [...byWords, ...byType]
 }
 
 const UNIT = '(?:x|stk|pcs|pk|g|kg|l|dl|ml|cl)'

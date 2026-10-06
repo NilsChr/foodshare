@@ -57,7 +57,7 @@ export default function ListPage() {
     const map = new Map<string, Offer[]>()
     if (!index.length) return map
     for (const i of open) {
-      const found = offersFor(i.name, index)
+      const found = offersFor(i.name, index, i.product_type)
       if (found.length) map.set(i.id, found)
     }
     return map

@@ -6,7 +6,7 @@
 // Cron offers_sync: daily at 04:17 UTC (flyers switch at local midnight).
 // Cron offers_classify: every 10 minutes, at most 4 minutes of work, so runs never overlap.
 // POST /api/foodshare/offers-sync      (superuser)  -> { fetched, created, updated, deleted }
-// POST /api/foodshare/offers-classify  (superuser)  -> { classified, remaining, stopped }
+// POST /api/foodshare/offers-classify  (superuser)  -> { classified, remaining, items, stopped }
 
 cronAdd("offers_sync", "17 4 * * *", () => {
   try {
@@ -21,8 +21,8 @@ cronAdd("offers_classify", "*/10 * * * *", () => {
   try {
     const result = require(`${__hooks}/offers_classify.js`).classifyOffers($app, 240)
     // Quiet when there was nothing to do.
-    if (result.classified || result.stopped) {
-      $app.logger().info("offers classify", "classified", result.classified, "remaining", result.remaining, "stopped", result.stopped)
+    if (result.classified || result.items || result.stopped) {
+      $app.logger().info("offers classify", "classified", result.classified, "remaining", result.remaining, "items", result.items, "stopped", result.stopped)
     }
   } catch (err) {
     $app.logger().error("offers classify failed", "error", String(err))

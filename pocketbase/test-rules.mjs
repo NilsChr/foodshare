@@ -95,6 +95,21 @@ check("bob cannot take ownership",
 check("bob renames space",
   (await call(bob.token, "PATCH", `/api/collections/spaces/records/${space.id}`, { name: "Renamed" })).status, 200);
 check("bob cannot delete space", (await call(bob.token, "DELETE", `/api/collections/spaces/records/${space.id}`)).status, 404);
+// Shared offer data: readable when signed in, written only by the server hooks.
+const chains = (await call(eve.token, "GET", "/api/collections/chains/records?perPage=1")).body;
+check("signed-in user lists chains", chains.totalItems > 0, true);
+check("anonymous lists no offers", (await call(null, "GET", "/api/collections/offers/records?perPage=1")).body.totalItems, 0);
+check("user cannot create offer",
+  (await call(eve.token, "POST", "/api/collections/offers/records", { key: "x", chain: chains.items[0].id, heading: "x" })).status, 403);
+check("user cannot edit chain",
+  (await call(eve.token, "PATCH", `/api/collections/chains/records/${chains.items[0].id}`, { name: "x" })).status, 403);
+check("user cannot read product name cache",
+  (await call(eve.token, "GET", "/api/collections/product_names/records")).status, 403);
+check("bob picks group stores",
+  (await call(bob.token, "PATCH", `/api/collections/spaces/records/${space.id}`, { chains: [chains.items[0].id] })).status, 200);
+check("eve cannot pick stores for the group",
+  (await call(eve.token, "PATCH", `/api/collections/spaces/records/${space.id}`, { chains: [] })).status, 404);
+
 check("alice deletes space", (await call(alice.token, "DELETE", `/api/collections/spaces/records/${space.id}`)).status, 204);
 check("item cascade-deleted", (await call(admin, "GET", `/api/collections/items/records/${item.id}`)).status, 404);
 check("pantry cascade-deleted", (await call(admin, "GET", `/api/collections/pantry/records/${stock.id}`)).status, 404);

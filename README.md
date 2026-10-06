@@ -49,11 +49,12 @@ All space data is reachable only by members of the space (`space.memberships_via
 | `memberships` | `space` + `user`. You can only create your own membership: as the owner, or with a pending invite to your email. |
 | `invites` | Invite by email. The invitee sees it after sign-in and accepts (creates membership, deletes invite). |
 | `categories` | Store sections per space with `keywords`, in walking order (`sort`, drag to reorder). `group_with` shows a section under another's header in the list. Default names are stored in English and shown translated until renamed. |
-| `items` | Shopping list. `checked` = in the basket. `recipe` links items added from a recipe. |
+| `items` | Shopping list. `checked` = in the basket. `recipe` links items added from a recipe. `product_type` is set by the server for offer matching. |
 | `recipes` | `ingredients` is JSON `[{name, quantity}]`; `image` has thumbs; `favorited_by` is per-user favorites; `minutes` = cooking time; `tags` is a JSON string list; `source`/`source_url` record where an import came from (unique per space). |
 | `meals` | One dinner per space and day (`date` = `YYYY-MM-DD`): a recipe or a free-text `note`. `factor` 2 = doubled for leftovers. |
 | `chains` | Grocery chains with name, `logo` URL and brand `color`. Shared, read-only for users; written by the offers sync. |
-| `offers` | This week's flyer offers, `chain` relation. Shared, read-only for users; replaced by the offers sync. |
+| `offers` | This week's flyer offers, `chain` relation, `category` and `product_type` from the classifier. Shared, read-only for users; replaced by the offers sync. |
+| `product_names` | Server-only cache: list item name -> product type. |
 | `pantry` | What the household has at home ("At home" tab): one `name` per row, shared by the space. No quantities. |
 
 ## How the smart parts work (`web/src/lib/match.ts`)
@@ -81,6 +82,7 @@ The hook ships inside the PocketBase image, so deploying PocketBase deploys the 
 - Every signed-in user can read chains and offers; nobody can write them through the API. Offers are not tied to a space; each group picks its stores (Group → Stores, saved in `spaces.chains`).
 - In the app (`web/src/lib/offers.ts`, `components/offers.tsx`): Group → Stores starts empty; "Add" picks one or more chains. Open list items with matching offers show a tag with the count; tapping it lists the offers. With 2+ stores chosen, the list recommends the store with offers on the most open items (at least 2; ties go to the bigger total discount) and shows how the others compare. "Save about X" sums before-price minus price for the closest-matching offer per item, only where the flyer gives a before-price (about 30% of offers; Bunnpris never does), so it is a lower bound and is not used for ranking. The Offers page (`/offers`, tag button on the list, "See flyer offers" under Group → Stores) searches and filters the group's offers, biggest discount first, and adds an offer to the list. Matching (`offersFor` in `match.ts`) is stricter than other name matching: "melk" matches "lettmelk" and "pølser" matches "grillpølser", but "kylling" does not match "kyllingkrydder".
 - Categories: the flyer API has none, so `offers_classify.js` asks TypeSafe AI's Jev model (a classifier that picks one of fixed choices) for each offer's store section: the ten default sections plus `other`. Cron `offers_classify` runs every 10 minutes for at most 4 minutes; offers keep their category across syncs, so only new ones are sent (about 600 input tokens and 250 ms each; a full week of ~1200 offers costs a few cents). Needs `TYPESAFE_API_KEY` in the PocketBase environment (Coolify env var; locally compose reads it from the root `.env`). Without it offers stay uncategorized. Superusers can run a 60-second batch with `POST /api/foodshare/offers-classify`. The Offers page filters by category, and adding an offer to the list falls back to the matching default section when keywords find none.
+- Product types: to match list items that share no words with a heading ("kaffe" vs "ALI FILTERMALT/KOKMALT"), offers and items get a product type key such as `coffee` from `pb_hooks/product_types.json` (137 types with Norwegian names and flyer words, from kundeavis-mcp's `ingredients.yaml`, MIT). Offers get it in the same Jev request as the category (~5000 input tokens, mostly the type list; under 30 cents per week for all chains). Items get it from `item_types.pb.js` on create and rename, only in groups with stores: first the shared `product_names` cache, then the type list's names and aliases, then one Jev request; each name is resolved once for everyone. If Jev is unavailable the item is saved without a type and the classify cron fills it in. In the app, `offersFor` returns word matches first, then other offers of the same type. Types are exact: "kylling" (whole chicken) does not match `chicken_breast` offers by type.
 - `pre_price` and `discount_pct` are only set when the flyer gives a before-price. Percentage offers ("-40%") usually have it only in `description`.
 
 ## Deploying PocketBase
@@ -117,6 +119,7 @@ English and Norwegian (bokmål). The browser language picks the default; users c
 - Move the live PocketBase to the Docker image (see "Deploying PocketBase"), then test recipe import there.
 - Decide where the web app is hosted (PocketBase `pb_public` via a Docker build is the simplest single-origin option).
 - Turn on Google sign-in and email OTP (SMTP) in PocketBase.
+- Plan, not built: premium for groups (AI offer features as a paid upgrade). See `docs/premium.md`.
 - Idea, not built: public recipes ("share publicly" + an Explore tab where others copy recipes into their own space).
 - The old destructive "merge sections" is gone; sections merged with it before can't be split again.
 

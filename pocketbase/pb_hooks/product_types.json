@@ -1,0 +1,1526 @@
+{
+ "source": "Product types and aliases from https://github.com/donadelicc/kundeavis-mcp/blob/95a37124a2ee2ea43f7156688f13078c4d68df5f/data/ingredients.yaml (MIT License, Copyright (c) 2026 Preben Andersen)",
+ "types": [
+  {
+   "key": "chicken_breast",
+   "name": "Kyllingfilet",
+   "aliases": [
+    "kyllingfilet",
+    "kyllingfileter",
+    "kylling filet",
+    "kyllingbryst",
+    "kyllingstrimler"
+   ]
+  },
+  {
+   "key": "chicken_whole",
+   "name": "Kylling",
+   "aliases": [
+    "hel kylling",
+    "kylling",
+    "kyllinglår",
+    "kyllingklubber"
+   ]
+  },
+  {
+   "key": "chicken_wings",
+   "name": "Kyllingvinger",
+   "aliases": [
+    "kyllingvinger",
+    "vinger"
+   ]
+  },
+  {
+   "key": "pork_neck",
+   "name": "Svinenakke / nakkekotelett",
+   "aliases": [
+    "nakkekotelett",
+    "nakkekoteletter",
+    "svinenakke",
+    "nakkefilet"
+   ]
+  },
+  {
+   "key": "pork_chop",
+   "name": "Svinekotelett",
+   "aliases": [
+    "svinekotelett",
+    "svinekoteletter",
+    "koteletter",
+    "kotelett",
+    "sommerkoteletter",
+    "grillkoteletter",
+    "svinekam"
+   ]
+  },
+  {
+   "key": "pork_tenderloin",
+   "name": "Svineindrefilet",
+   "aliases": [
+    "svineindrefilet",
+    "svin indrefilet",
+    "indrefilet av svin"
+   ]
+  },
+  {
+   "key": "pork_sirloin",
+   "name": "Svineytrefilet",
+   "aliases": [
+    "svineytrefilet",
+    "svin ytrefilet",
+    "ytrefilet av svin",
+    "svin ytrefilet bbq",
+    "ytrefilet",
+    "grillskiver",
+    "bbq marinerte grillskiver"
+   ]
+  },
+  {
+   "key": "pork_ribs",
+   "name": "Spareribs",
+   "aliases": [
+    "spareribs",
+    "grillribbe",
+    "baby back ribs",
+    "ribs",
+    "grillribbe krydret",
+    "burnt ends"
+   ]
+  },
+  {
+   "key": "bacon",
+   "name": "Bacon",
+   "aliases": [
+    "bacon"
+   ]
+  },
+  {
+   "key": "ground_beef",
+   "name": "Kjøttdeig",
+   "aliases": [
+    "kjøttdeig",
+    "karbonadedeig",
+    "deig"
+   ]
+  },
+  {
+   "key": "beef_steak",
+   "name": "Biff",
+   "aliases": [
+    "entrecote",
+    "mørbrad",
+    "flank steak",
+    "biff",
+    "wilmastek",
+    "angus",
+    "angussnadder",
+    "ribeye",
+    "flatbiff",
+    "mørbradbiff",
+    "høyrygg",
+    "bog",
+    "grytekjøtt"
+   ]
+  },
+  {
+   "key": "beef_tenderloin",
+   "name": "Indrefilet av storfe",
+   "aliases": [
+    "indrefilet storfe",
+    "indrefilet av storfe",
+    "indrefilet"
+   ]
+  },
+  {
+   "key": "burger_patty",
+   "name": "Hamburger",
+   "aliases": [
+    "hamburger",
+    "hamburgere",
+    "grillburger",
+    "burger",
+    "burgere",
+    "karbonade",
+    "karbonader",
+    "hamburger big size",
+    "burger luftig",
+    "luftig burger",
+    "grillfilet",
+    "burgers",
+    "angusburger",
+    "kyllingburger",
+    "beefy burgers",
+    "skinny burgers",
+    "grillburgere"
+   ]
+  },
+  {
+   "key": "sausage",
+   "name": "Pølse",
+   "aliases": [
+    "grillpølse",
+    "grillpølser",
+    "kjøttpølse",
+    "wienerpølser",
+    "pølser",
+    "pølse",
+    "medisterpølse",
+    "medisterpølser",
+    "julemedister"
+   ]
+  },
+  {
+   "key": "ham",
+   "name": "Skinke",
+   "aliases": [
+    "skinke",
+    "spekeskinke",
+    "serranoskinke",
+    "juleskinke",
+    "juleskinka",
+    "juleskinker",
+    "romjulsskinke"
+   ]
+  },
+  {
+   "key": "lamb",
+   "name": "Lam",
+   "aliases": [
+    "lammelår",
+    "lammekotelett",
+    "lammeskank",
+    "lam",
+    "lammelåret",
+    "lammestek",
+    "lammesteik",
+    "lammekoteletter",
+    "lammebog",
+    "lammeskanker",
+    "lammefrikasse",
+    "lammefilet",
+    "lammerull",
+    "fårekjøtt",
+    "fårepølse"
+   ]
+  },
+  {
+   "key": "cured_meat",
+   "name": "Spekemat",
+   "aliases": [
+    "salami",
+    "fenalår",
+    "spekemat",
+    "pepperoni",
+    "sylte",
+    "sylta",
+    "rullepølse",
+    "rullepølsa",
+    "rullepølser",
+    "julepålegg"
+   ]
+  },
+  {
+   "key": "meatballs",
+   "name": "Kjøttkaker",
+   "aliases": [
+    "kjøttkaker",
+    "kjøttboller",
+    "medisterkaker",
+    "medisterkake",
+    "julepølse",
+    "julepølser"
+   ]
+  },
+  {
+   "key": "salmon",
+   "name": "Laks",
+   "aliases": [
+    "laksefilet",
+    "lakseskiver",
+    "røykt laks",
+    "laks",
+    "gravlaks",
+    "røkelaks",
+    "røykelaks",
+    "røkt laks",
+    "julelaks"
+   ]
+  },
+  {
+   "key": "cod",
+   "name": "Torsk",
+   "aliases": [
+    "torskefilet",
+    "torsk",
+    "skrei"
+   ]
+  },
+  {
+   "key": "shrimp",
+   "name": "Reker",
+   "aliases": [
+    "reker",
+    "reker i løsvekt",
+    "reker i kartong",
+    "polar reker"
+   ]
+  },
+  {
+   "key": "mackerel",
+   "name": "Makrell",
+   "aliases": [
+    "makrell",
+    "makrell i tomat",
+    "makrellfilet",
+    "makrellfileter",
+    "røkt makrell"
+   ]
+  },
+  {
+   "key": "herring",
+   "name": "Sild",
+   "aliases": [
+    "sild",
+    "sildefilet",
+    "silda",
+    "sursild",
+    "kryddersild",
+    "tomatsild",
+    "sennepssild",
+    "matjessild",
+    "sildefileter",
+    "julesild"
+   ]
+  },
+  {
+   "key": "trout",
+   "name": "Ørret",
+   "aliases": [
+    "ørret",
+    "ørretfilet"
+   ]
+  },
+  {
+   "key": "tuna",
+   "name": "Tunfisk",
+   "aliases": [
+    "tunfisk"
+   ]
+  },
+  {
+   "key": "fish_cakes",
+   "name": "Fiskekaker",
+   "aliases": [
+    "fiskekaker",
+    "fiskeboller",
+    "fiskepudding",
+    "fiskegrateng",
+    "fiskepinner",
+    "fiskebolle",
+    "fiskekake",
+    "fiskepuddingen",
+    "fiskeburger",
+    "fiskegryte"
+   ]
+  },
+  {
+   "key": "shellfish_other",
+   "name": "Skalldyr",
+   "aliases": [
+    "krabbe",
+    "krabbeklør",
+    "blåskjell",
+    "sjøkreps"
+   ]
+  },
+  {
+   "key": "cheese_yellow",
+   "name": "Gulost",
+   "aliases": [
+    "gulost",
+    "gulost&cheddar",
+    "norvegia",
+    "jarlsberg",
+    "cheddar",
+    "synnøve",
+    "prima"
+   ]
+  },
+  {
+   "key": "cheese_white",
+   "name": "Hvit ost",
+   "aliases": [
+    "apetina",
+    "salatost",
+    "fetaost",
+    "feta",
+    "brie",
+    "brie de paris",
+    "camembert",
+    "mozzarella"
+   ]
+  },
+  {
+   "key": "cheese_brown",
+   "name": "Brunost",
+   "aliases": [
+    "brunost",
+    "gudbrandsdalsost",
+    "prim"
+   ]
+  },
+  {
+   "key": "cream_cheese",
+   "name": "Kremost",
+   "aliases": [
+    "kremost",
+    "philadelphia",
+    "snøfrisk"
+   ]
+  },
+  {
+   "key": "milk",
+   "name": "Melk",
+   "aliases": [
+    "lettmelk",
+    "helmelk",
+    "ekstra lettmelk",
+    "skummet melk",
+    "melk"
+   ]
+  },
+  {
+   "key": "yoghurt",
+   "name": "Yoghurt",
+   "aliases": [
+    "yoghurt",
+    "gresk yoghurt",
+    "skyr",
+    "biola",
+    "yoghurt naturell",
+    "kesam",
+    "cottage cheese",
+    "drikkeyoghurt",
+    "go morgen"
+   ]
+  },
+  {
+   "key": "cream",
+   "name": "Fløte",
+   "aliases": [
+    "kremfløte",
+    "matfløte",
+    "fløte"
+   ]
+  },
+  {
+   "key": "butter",
+   "name": "Smør og margarin",
+   "aliases": [
+    "smør",
+    "bremykt",
+    "melange",
+    "margarin",
+    "soft flora"
+   ]
+  },
+  {
+   "key": "eggs",
+   "name": "Egg",
+   "aliases": [
+    "gårdsegg",
+    "egg",
+    "frilandsegg"
+   ]
+  },
+  {
+   "key": "ice_cream",
+   "name": "Iskrem",
+   "aliases": [
+    "krone is",
+    "diplom is",
+    "ispinne",
+    "ispinner",
+    "iskrem",
+    "sandwich is",
+    "is"
+   ]
+  },
+  {
+   "key": "tomato",
+   "name": "Tomat",
+   "aliases": [
+    "piccolotomater",
+    "bifftomater",
+    "klasetomater",
+    "cherrytomater",
+    "smak piccolotomater",
+    "tomater",
+    "tomat"
+   ]
+  },
+  {
+   "key": "cucumber",
+   "name": "Agurk",
+   "aliases": [
+    "agurk",
+    "slangeagurk"
+   ]
+  },
+  {
+   "key": "lettuce",
+   "name": "Salat",
+   "aliases": [
+    "isbergsalat",
+    "crispisalat",
+    "norsk crispisalat",
+    "hodesalat",
+    "ruccola",
+    "salater",
+    "salatmix",
+    "salatbar",
+    "salat"
+   ]
+  },
+  {
+   "key": "potato",
+   "name": "Potet",
+   "aliases": [
+    "bakepoteter",
+    "bakepotet",
+    "mandelpotet",
+    "båtpoteter",
+    "poteter",
+    "potet"
+   ]
+  },
+  {
+   "key": "carrot",
+   "name": "Gulrot",
+   "aliases": [
+    "gulrøtter",
+    "gulrot i bunt",
+    "gulrot"
+   ]
+  },
+  {
+   "key": "onion",
+   "name": "Løk",
+   "aliases": [
+    "rødløk",
+    "vårløk",
+    "norsk vårløk",
+    "sjalottløk",
+    "løk"
+   ]
+  },
+  {
+   "key": "garlic",
+   "name": "Hvitløk",
+   "aliases": [
+    "hvitløk"
+   ]
+  },
+  {
+   "key": "broccoli",
+   "name": "Brokkoli",
+   "aliases": [
+    "brokkolini",
+    "brokkoli"
+   ]
+  },
+  {
+   "key": "cauliflower",
+   "name": "Blomkål",
+   "aliases": [
+    "norsk blomkål",
+    "blomkål"
+   ]
+  },
+  {
+   "key": "cabbage",
+   "name": "Kål",
+   "aliases": [
+    "spisskål",
+    "hvitkål",
+    "rødkål",
+    "kinakål",
+    "kål",
+    "surkål",
+    "rødkålen",
+    "julekål"
+   ]
+  },
+  {
+   "key": "pepper_bell",
+   "name": "Paprika",
+   "aliases": [
+    "paprika"
+   ]
+  },
+  {
+   "key": "mushroom",
+   "name": "Sopp",
+   "aliases": [
+    "sjampinjong",
+    "aromasopp",
+    "sopp",
+    "kantarell",
+    "kantareller",
+    "østerssopp",
+    "sjampinjonger"
+   ]
+  },
+  {
+   "key": "avocado",
+   "name": "Avokado",
+   "aliases": [
+    "avokado",
+    "avokado 2 pk"
+   ]
+  },
+  {
+   "key": "banana",
+   "name": "Banan",
+   "aliases": [
+    "bananer",
+    "banan"
+   ]
+  },
+  {
+   "key": "apple",
+   "name": "Eple",
+   "aliases": [
+    "epler",
+    "eple"
+   ]
+  },
+  {
+   "key": "citrus",
+   "name": "Sitrusfrukt",
+   "aliases": [
+    "appelsiner",
+    "appelsin",
+    "clementiner",
+    "clementin",
+    "sitron",
+    "lime",
+    "grapefrukt"
+   ]
+  },
+  {
+   "key": "grapes",
+   "name": "Druer",
+   "aliases": [
+    "druer"
+   ]
+  },
+  {
+   "key": "strawberries",
+   "name": "Jordbær",
+   "aliases": [
+    "jordbær",
+    "norske jordbær"
+   ]
+  },
+  {
+   "key": "blueberries",
+   "name": "Blåbær",
+   "aliases": [
+    "blåbær"
+   ]
+  },
+  {
+   "key": "raspberries",
+   "name": "Bringebær",
+   "aliases": [
+    "bringebær"
+   ]
+  },
+  {
+   "key": "melon",
+   "name": "Melon",
+   "aliases": [
+    "hel vannmelon",
+    "vannmelon",
+    "honningmelon",
+    "galiamelon",
+    "melon"
+   ]
+  },
+  {
+   "key": "stone_fruit",
+   "name": "Steinfrukt",
+   "aliases": [
+    "nektarin",
+    "nektariner",
+    "fersken",
+    "plommer",
+    "aprikos",
+    "cevita stenfrukter"
+   ]
+  },
+  {
+   "key": "cherries",
+   "name": "Moreller",
+   "aliases": [
+    "norske moreller",
+    "moreller",
+    "kirsebær"
+   ]
+  },
+  {
+   "key": "mango",
+   "name": "Mango",
+   "aliases": [
+    "pakistansk mango",
+    "mango"
+   ]
+  },
+  {
+   "key": "pear",
+   "name": "Pære",
+   "aliases": [
+    "pærer",
+    "pære"
+   ]
+  },
+  {
+   "key": "pineapple",
+   "name": "Ananas",
+   "aliases": [
+    "ananas"
+   ]
+  },
+  {
+   "key": "asparagus",
+   "name": "Asparges",
+   "aliases": [
+    "asparges"
+   ]
+  },
+  {
+   "key": "squash",
+   "name": "Squash",
+   "aliases": [
+    "squash",
+    "aubergine",
+    "gresskar",
+    "gresskaret"
+   ]
+  },
+  {
+   "key": "corn",
+   "name": "Mais",
+   "aliases": [
+    "maiskolbe",
+    "maiskorn",
+    "mais"
+   ]
+  },
+  {
+   "key": "radish",
+   "name": "Reddik",
+   "aliases": [
+    "norsk reddik",
+    "reddik"
+   ]
+  },
+  {
+   "key": "leek",
+   "name": "Purre",
+   "aliases": [
+    "purre"
+   ]
+  },
+  {
+   "key": "spinach",
+   "name": "Spinat",
+   "aliases": [
+    "spinat",
+    "grønnkål"
+   ]
+  },
+  {
+   "key": "peas_beans_fresh",
+   "name": "Erter og bønner",
+   "aliases": [
+    "sukkererter",
+    "erter",
+    "aksjebønner",
+    "bønner"
+   ]
+  },
+  {
+   "key": "bread",
+   "name": "Brød",
+   "aliases": [
+    "grovbrød",
+    "rundstykker",
+    "valmueloff",
+    "polar-levain",
+    "loff",
+    "baguette",
+    "brød",
+    "baguettes",
+    "morgenstykker",
+    "frøloff",
+    "sandwich",
+    "pizzadeig",
+    "landbrød"
+   ]
+  },
+  {
+   "key": "burger_bun",
+   "name": "Burgerbrød",
+   "aliases": [
+    "burgerbrød",
+    "hamburgerbrød",
+    "brioche",
+    "brioche gourmet"
+   ]
+  },
+  {
+   "key": "hotdog_bun",
+   "name": "Pølsebrød",
+   "aliases": [
+    "pølsebrød",
+    "lompe",
+    "lomper",
+    "potetlompe",
+    "potetlomper",
+    "pølselompe"
+   ]
+  },
+  {
+   "key": "focaccia",
+   "name": "Focaccia",
+   "aliases": [
+    "focaccia",
+    "ciabatta"
+   ]
+  },
+  {
+   "key": "pasta",
+   "name": "Pasta",
+   "aliases": [
+    "spaghetti",
+    "makaroni",
+    "penne",
+    "fusilli",
+    "lasagneplater",
+    "pasta"
+   ]
+  },
+  {
+   "key": "rice",
+   "name": "Ris",
+   "aliases": [
+    "jasminris",
+    "basmatiris",
+    "grøtris",
+    "ris"
+   ]
+  },
+  {
+   "key": "flour",
+   "name": "Mel",
+   "aliases": [
+    "hvetemel",
+    "pizzamel",
+    "pizzamel tipo 00",
+    "mel"
+   ]
+  },
+  {
+   "key": "tortilla",
+   "name": "Tortilla",
+   "aliases": [
+    "tortilla",
+    "tortillalefser",
+    "wrap",
+    "taco",
+    "tacolefse",
+    "tacolefser",
+    "tacoskjell",
+    "tacokit"
+   ]
+  },
+  {
+   "key": "crispbread",
+   "name": "Knekkebrød",
+   "aliases": [
+    "knekkebrød"
+   ]
+  },
+  {
+   "key": "oats",
+   "name": "Havregryn",
+   "aliases": [
+    "havregryn",
+    "müsli",
+    "cornflakes",
+    "frokostblanding"
+   ]
+  },
+  {
+   "key": "pizza_base",
+   "name": "Pizzabunn",
+   "aliases": [
+    "pizzabunn"
+   ]
+  },
+  {
+   "key": "tomato_canned",
+   "name": "Hermetiske tomater / tomatsaus",
+   "aliases": [
+    "finhakkede tomater",
+    "hermetiske tomater",
+    "tomatsaus",
+    "pizzasaus",
+    "passata",
+    "tomatpure"
+   ]
+  },
+  {
+   "key": "mayonnaise",
+   "name": "Majones",
+   "aliases": [
+    "majones",
+    "ekte majones"
+   ]
+  },
+  {
+   "key": "ketchup",
+   "name": "Ketchup",
+   "aliases": [
+    "ketchup"
+   ]
+  },
+  {
+   "key": "mustard",
+   "name": "Sennep",
+   "aliases": [
+    "sennep"
+   ]
+  },
+  {
+   "key": "dressing",
+   "name": "Dressing",
+   "aliases": [
+    "burgerdressing",
+    "rømmedressing",
+    "hvitløksdressing",
+    "dressing"
+   ]
+  },
+  {
+   "key": "cooking_oil",
+   "name": "Matolje",
+   "aliases": [
+    "olivenolje",
+    "rapsolje",
+    "matolje"
+   ]
+  },
+  {
+   "key": "sugar",
+   "name": "Sukker",
+   "aliases": [
+    "sukker",
+    "melis",
+    "farin"
+   ]
+  },
+  {
+   "key": "jam",
+   "name": "Syltetøy",
+   "aliases": [
+    "jordbærsyltetøy",
+    "syltetøy",
+    "marmelade",
+    "tyttebær",
+    "tyttebærsyltetøy",
+    "tyttebærrøre",
+    "multer",
+    "multesyltetøy"
+   ]
+  },
+  {
+   "key": "spices",
+   "name": "Krydder",
+   "aliases": [
+    "krydder",
+    "krydderkvern",
+    "grillkrydder",
+    "tacokrydder"
+   ]
+  },
+  {
+   "key": "sauce",
+   "name": "Saus",
+   "aliases": [
+    "bbq saus",
+    "soyasaus",
+    "sweet chili",
+    "sauce",
+    "saus"
+   ]
+  },
+  {
+   "key": "nuts",
+   "name": "Nøtter",
+   "aliases": [
+    "cashewnøtter",
+    "peanøtter",
+    "mandler",
+    "barmiks nøtter",
+    "nøtter"
+   ]
+  },
+  {
+   "key": "coffee",
+   "name": "Kaffe",
+   "aliases": [
+    "filterkaffe",
+    "kaffekapsler",
+    "kaffe",
+    "filtermalt",
+    "kjeldsberg"
+   ]
+  },
+  {
+   "key": "tea",
+   "name": "Te",
+   "aliases": [
+    "teposer",
+    "grønn te"
+   ]
+  },
+  {
+   "key": "honey",
+   "name": "Honning",
+   "aliases": [
+    "honning"
+   ]
+  },
+  {
+   "key": "legumes",
+   "name": "Bønner og linser",
+   "aliases": [
+    "kikerter",
+    "linser",
+    "svarte bønner",
+    "kidneybønner"
+   ]
+  },
+  {
+   "key": "pizza_frozen",
+   "name": "Frossenpizza",
+   "aliases": [
+    "grandiosa",
+    "big one",
+    "frossenpizza",
+    "pizza"
+   ]
+  },
+  {
+   "key": "fries",
+   "name": "Pommes frites",
+   "aliases": [
+    "pommes frites",
+    "potetstaver",
+    "potetskiver",
+    "potetbåter"
+   ]
+  },
+  {
+   "key": "prepared_salad",
+   "name": "Ferdigsalat",
+   "aliases": [
+    "potetsalat",
+    "grillpotetsalat",
+    "coleslaw",
+    "brokkolisalat",
+    "pastasalat",
+    "rissalat",
+    "coleslaw chili kit",
+    "tzatziki",
+    "middelhavssalat",
+    "tilbehør",
+    "aioli",
+    "guacamole"
+   ]
+  },
+  {
+   "key": "ready_meal",
+   "name": "Ferdigmat",
+   "aliases": [
+    "ferdigmat",
+    "billig middag",
+    "middagsrett",
+    "gryterett",
+    "lasagne",
+    "pytt i panne"
+   ]
+  },
+  {
+   "key": "pancakes",
+   "name": "Pannekaker",
+   "aliases": [
+    "pannekaker",
+    "vafler",
+    "vaffel",
+    "vaffelrøre",
+    "pannekakerøre",
+    "lapper"
+   ]
+  },
+  {
+   "key": "pie",
+   "name": "Pai",
+   "aliases": [
+    "pai",
+    "quiche"
+   ]
+  },
+  {
+   "key": "cake",
+   "name": "Kake",
+   "aliases": [
+    "kaker",
+    "boller",
+    "muffins",
+    "kake",
+    "donut",
+    "donuts",
+    "skolebrød",
+    "kanelboller",
+    "julekake",
+    "julekaker",
+    "julebrød",
+    "kransekake",
+    "kransekaker",
+    "kransekakestenger"
+   ]
+  },
+  {
+   "key": "soda",
+   "name": "Brus",
+   "aliases": [
+    "coca cola",
+    "coca cola zero sugar",
+    "coca cola original",
+    "pepsi max",
+    "pepsi",
+    "sprite",
+    "fanta",
+    "urge",
+    "solo",
+    "cola",
+    "brus",
+    "sprudle",
+    "boble",
+    "julebrus",
+    "julemusserende"
+   ]
+  },
+  {
+   "key": "water_bottled",
+   "name": "Vann på flaske",
+   "aliases": [
+    "farris",
+    "farris bris",
+    "farris frus",
+    "imsdal",
+    "arctic water",
+    "mineralvann"
+   ]
+  },
+  {
+   "key": "juice",
+   "name": "Juice",
+   "aliases": [
+    "nypresset appelsinjuice",
+    "appelsinjuice",
+    "eplejuice",
+    "juice",
+    "capri sun",
+    "fruktdrikk",
+    "drikke"
+   ]
+  },
+  {
+   "key": "beer_alcohol_free",
+   "name": "Alkoholfritt øl",
+   "aliases": [
+    "clausthaler",
+    "clausthaler radler",
+    "munkholm",
+    "radler",
+    "juleøl",
+    "julebrygg"
+   ]
+  },
+  {
+   "key": "energy_drink",
+   "name": "Energidrikk",
+   "aliases": [
+    "battery",
+    "gatorade",
+    "red bull",
+    "monster",
+    "battery/gatorade"
+   ]
+  },
+  {
+   "key": "smoothie",
+   "name": "Smoothie",
+   "aliases": [
+    "smoothie",
+    "bendit smoothie"
+   ]
+  },
+  {
+   "key": "iced_tea",
+   "name": "Iste",
+   "aliases": [
+    "iste",
+    "nestea"
+   ]
+  },
+  {
+   "key": "squash_drink",
+   "name": "Saft",
+   "aliases": [
+    "saft",
+    "sirup",
+    "fun light",
+    "saftblanding",
+    "mocktailblanding",
+    "smoothieblanding"
+   ]
+  },
+  {
+   "key": "chips",
+   "name": "Potetchips",
+   "aliases": [
+    "sørlandschips",
+    "potetgull",
+    "maarud potetgull",
+    "potetskruer",
+    "chips",
+    "ostepop"
+   ]
+  },
+  {
+   "key": "chocolate",
+   "name": "Sjokolade",
+   "aliases": [
+    "sjokoladeplater",
+    "sjokolade",
+    "freia småbiter",
+    "kvikk lunsj",
+    "melkesjokolade"
+   ]
+  },
+  {
+   "key": "candy",
+   "name": "Godteri",
+   "aliases": [
+    "seigmenn",
+    "godteri",
+    "småposer",
+    "lakris",
+    "pastiller",
+    "pops",
+    "cloetta",
+    "små poser",
+    "tørket frukt",
+    "marsipan",
+    "julemarsipan",
+    "konfekt",
+    "julekonfekt",
+    "julegodt",
+    "påskeegg",
+    "påskegodt"
+   ]
+  },
+  {
+   "key": "biscuits",
+   "name": "Kjeks",
+   "aliases": [
+    "cookies",
+    "kjeks",
+    "digestive",
+    "pepperkake",
+    "pepperkaker",
+    "pepperkakedeig",
+    "krumkaker",
+    "sirupsnipper",
+    "berlinerkranser",
+    "fattigmann",
+    "sandkaker",
+    "goro",
+    "julekjeks"
+   ]
+  },
+  {
+   "key": "toilet_paper",
+   "name": "Toalettpapir",
+   "aliases": [
+    "toalettpapir",
+    "lambi toalettpapir",
+    "tørkepapir",
+    "lotus torky"
+   ]
+  },
+  {
+   "key": "sunscreen",
+   "name": "Solkrem",
+   "aliases": [
+    "sun lotion",
+    "solkrem",
+    "after sun"
+   ]
+  },
+  {
+   "key": "diapers",
+   "name": "Bleier",
+   "aliases": [
+    "bleier",
+    "little swimmers"
+   ]
+  },
+  {
+   "key": "cut_flowers",
+   "name": "Blomster",
+   "aliases": [
+    "krysantemum",
+    "chrysanthemum",
+    "blomster",
+    "roser",
+    "bukett",
+    "frilandskryss",
+    "favorittbukett",
+    "epleblomsten",
+    "sommerbukett",
+    "potteplante"
+   ]
+  },
+  {
+   "key": "cleaning",
+   "name": "Rengjøring",
+   "aliases": [
+    "oppvaskmiddel",
+    "vaskemiddel",
+    "zalo",
+    "avfallssortering",
+    "søppelsekker",
+    "wc rens",
+    "rens",
+    "tørkerull",
+    "servietter",
+    "engangstallerken",
+    "engangsbestikk"
+   ]
+  },
+  {
+   "key": "first_aid",
+   "name": "Apotekvarer",
+   "aliases": [
+    "plaster",
+    "salvequick plaster"
+   ]
+  },
+  {
+   "key": "charcoal",
+   "name": "Grillkull",
+   "aliases": [
+    "grillkull",
+    "kull",
+    "briketter",
+    "tennvæske"
+   ]
+  },
+  {
+   "key": "meat_skewers",
+   "name": "Grillspyd",
+   "aliases": [
+    "kyllingspyd",
+    "grillspyd",
+    "spyd",
+    "gyros",
+    "svinespyd",
+    "marinert spyd",
+    "grillspydd"
+   ]
+  },
+  {
+   "key": "personal_care",
+   "name": "Personlig pleie",
+   "aliases": [
+    "face control cream",
+    "shampo",
+    "dusjsåpe",
+    "tannkrem",
+    "deodorant",
+    "bodylotion",
+    "såpe"
+   ]
+  },
+  {
+   "key": "pork_belly",
+   "name": "Ribbe",
+   "aliases": [
+    "ribbe",
+    "ribba",
+    "ribber",
+    "juleribbe",
+    "juleribba",
+    "tynnribbe",
+    "tynnribba",
+    "tykkribbe",
+    "familieribbe",
+    "svineribbe",
+    "ribbestek",
+    "ribbesteik",
+    "ribberoll"
+   ]
+  },
+  {
+   "key": "cured_lamb_ribs",
+   "name": "Pinnekjøtt",
+   "aliases": [
+    "pinnekjøtt",
+    "pinnekjøttet",
+    "røkt pinnekjøtt",
+    "urøkt pinnekjøtt",
+    "røykt pinnekjøtt"
+   ]
+  },
+  {
+   "key": "turkey",
+   "name": "Kalkun",
+   "aliases": [
+    "kalkun",
+    "kalkunen",
+    "kalkuner",
+    "kalkunfilet",
+    "kalkunfileter",
+    "kalkunbryst",
+    "kalkunstek",
+    "kalkunsteik",
+    "julekalkun",
+    "kalkunpølse",
+    "kalkunpølser"
+   ]
+  },
+  {
+   "key": "ground_pork",
+   "name": "Medisterdeig",
+   "aliases": [
+    "medisterdeig",
+    "medisterfarse",
+    "svinekjøttdeig",
+    "svinedeig"
+   ]
+  },
+  {
+   "key": "lutefisk",
+   "name": "Lutefisk",
+   "aliases": [
+    "lutefisk",
+    "lutefisken",
+    "lutefilet"
+   ]
+  },
+  {
+   "key": "rice_porridge",
+   "name": "Risgrøt",
+   "aliases": [
+    "risgrøt",
+    "riskrem",
+    "risengrynsgrøt",
+    "julegrøt"
+   ]
+  },
+  {
+   "key": "mutton_stew_meat",
+   "name": "Fårikålkjøtt",
+   "aliases": [
+    "fårikål",
+    "fårikålkjøtt",
+    "fårikålkjøttet",
+    "fårikålmix"
+   ]
+  },
+  {
+   "key": "grilling_cheese",
+   "name": "Grillost",
+   "aliases": [
+    "grillost",
+    "grillosten",
+    "halloumi",
+    "grillostspyd"
+   ]
+  },
+  {
+   "key": "flatbread",
+   "name": "Lefse",
+   "aliases": [
+    "lefse",
+    "lefser",
+    "potetlefse",
+    "potetlefser",
+    "tynnlefse",
+    "flatbrød",
+    "lefsekling"
+   ]
+  },
+  {
+   "key": "liver_pate",
+   "name": "Leverpostei",
+   "aliases": [
+    "leverpostei",
+    "leverposteien",
+    "leverpai"
+   ]
+  },
+  {
+   "key": "fish_roe_spread",
+   "name": "Kaviar",
+   "aliases": [
+    "kaviar",
+    "kaviartube",
+    "tubekaviar"
+   ]
+  },
+  {
+   "key": "sour_cream",
+   "name": "Rømme",
+   "aliases": [
+    "rømme",
+    "rømmen",
+    "lettrømme",
+    "seterrømme",
+    "seierrømme",
+    "creme fraiche",
+    "rømmekolle"
+   ]
+  },
+  {
+   "key": "soup",
+   "name": "Suppe",
+   "aliases": [
+    "suppe",
+    "supper",
+    "betasuppe",
+    "ertesuppe",
+    "lapskaus",
+    "kjøttsuppe",
+    "blomkålsuppe"
+   ]
+  }
+ ]
+}
