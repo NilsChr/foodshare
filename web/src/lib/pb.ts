@@ -73,6 +73,8 @@ export interface Item extends RecordModel {
   recipe: string
   /** Product type key for matching offers ("coffee"), set by the server; "none" or "" when there is none. */
   product_type: string
+  /** Offers of that type the server confirmed the name means; null until checked. */
+  offer_matches: string[] | null
 }
 
 export interface Meal extends RecordModel {

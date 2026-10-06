@@ -29,14 +29,14 @@ const CRITERIA = {
 }
 
 // Classifies offers missing a category or product type, then list items missing a product
-// type, until `seconds` have passed. Returns counts. Stops early on rate limits or
+// type, then checks which offers list items mean (offer_matches.js), until `seconds` have passed. Returns counts. Stops early on rate limits or
 // outages; the next run continues where this one stopped.
 function classifyOffers(app, seconds) {
   if (!$os.getenv("TYPESAFE_API_KEY")) return { skipped: "TYPESAFE_API_KEY is not set" }
   const types = require(`${__hooks}/product_types.js`)
 
   const deadline = Date.now() + seconds * 1000
-  const result = { classified: 0, remaining: 0, items: 0, stopped: "" }
+  const result = { classified: 0, remaining: 0, items: 0, matched: 0, stopped: "" }
   const todo = app.findRecordsByFilter("offers", "category = '' || product_type = ''", "-discount_pct", 0, 0)
   const questions = {
     category: {
@@ -67,7 +67,10 @@ function classifyOffers(app, seconds) {
   }
   result.remaining = todo.length - result.classified
 
-  if (!result.stopped) result.items = types.backfillItems(app, deadline)
+  if (!result.stopped) {
+    result.items = types.backfillItems(app, deadline)
+    result.matched = require(`${__hooks}/offer_matches.js`).backfillMatches(app, deadline)
+  }
   return result
 }
 

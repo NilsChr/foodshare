@@ -324,6 +324,7 @@ const NO: Record<string, string> = {
   'The flyers are updated every night.': 'Kundeavisene oppdateres hver natt.',
   '{n} offers': '{n} tilbud',
   'Offers: {name}': 'Tilbud: {name}',
+  'Similar offers ({n})': 'Lignende tilbud ({n})',
   'until {date}': 'til {date}',
   'Best match': 'Beste treff',
   Price: 'Pris',

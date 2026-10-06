@@ -1,12 +1,15 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-// Keeps the shared `offers` collection in sync with this week's grocery flyers, and sorts
-// new offers into store sections. Logic lives in offers_sync.js and offers_classify.js.
+// Keeps the shared `offers` collection in sync with this week's grocery flyers, then sorts
+// new offers into store sections and checks which offers list items mean. Logic lives in
+// offers_sync.js, offers_classify.js and offer_matches.js.
 //
-// Cron offers_sync: daily at 04:17 UTC (flyers switch at local midnight).
-// Cron offers_classify: every 10 minutes, at most 4 minutes of work, so runs never overlap.
+// Cron offers_sync: daily at 04:17 UTC (flyers switch at local midnight). The sync is ~45
+// requests to the flyer API; classifying then sends only what is new to Jev, for at most
+// 20 minutes (a whole new week of ~1200 offers takes ~5). New list items are checked when
+// they are added; the next run catches up on any check that failed then.
 // POST /api/foodshare/offers-sync      (superuser)  -> { fetched, created, updated, deleted }
-// POST /api/foodshare/offers-classify  (superuser)  -> { classified, remaining, items, stopped }
+// POST /api/foodshare/offers-classify  (superuser)  -> { classified, remaining, items, matched, stopped }
 
 cronAdd("offers_sync", "17 4 * * *", () => {
   try {
@@ -15,15 +18,9 @@ cronAdd("offers_sync", "17 4 * * *", () => {
   } catch (err) {
     $app.logger().error("offers sync failed", "error", String(err))
   }
-})
-
-cronAdd("offers_classify", "*/10 * * * *", () => {
   try {
-    const result = require(`${__hooks}/offers_classify.js`).classifyOffers($app, 240)
-    // Quiet when there was nothing to do.
-    if (result.classified || result.items || result.stopped) {
-      $app.logger().info("offers classify", "classified", result.classified, "remaining", result.remaining, "items", result.items, "stopped", result.stopped)
-    }
+    const result = require(`${__hooks}/offers_classify.js`).classifyOffers($app, 1200)
+    $app.logger().info("offers classify", "classified", result.classified, "remaining", result.remaining, "items", result.items, "matched", result.matched, "stopped", result.stopped)
   } catch (err) {
     $app.logger().error("offers classify failed", "error", String(err))
   }

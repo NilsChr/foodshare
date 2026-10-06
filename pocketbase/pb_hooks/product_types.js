@@ -72,7 +72,7 @@ const normalize = (name) =>
     .join(" ")
 
 // Type key for a list item name, "none" when there is none, or "" when it could not be
-// decided now (no API key, Jev unavailable); the classify cron retries those.
+// decided now (no API key, Jev unavailable); the daily offers_sync cron retries those.
 function resolveName(app, name) {
   const norm = normalize(name)
   if (!norm) return "none"
@@ -136,4 +136,4 @@ function backfillItems(app, deadline) {
   return done
 }
 
-module.exports = { askJev, productQuestion, productAnswer, resolveName, comparesOffers, backfillItems }
+module.exports = { types, normalize, askJev, productQuestion, productAnswer, resolveName, comparesOffers, backfillItems }

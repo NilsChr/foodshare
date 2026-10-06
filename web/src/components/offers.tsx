@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Tag } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronDown, Tag } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { shortDate } from '../lib/dates'
 import { t } from '../lib/i18n'
@@ -22,12 +22,13 @@ export function ChainLogo({ chain, className = 'h-6 w-16' }: { chain?: Chain; cl
   )
 }
 
-/** Small "3 offers" button for a list row. */
-export function OfferBadge({ count, onClick }: { count: number; onClick: () => void }) {
+/** Small "3 offers" button for a list row. `similar`: only similar offers, shown muted without a count. */
+export function OfferBadge({ count, similar = false, onClick }: { count: number; similar?: boolean; onClick: () => void }) {
+  const label = t(similar ? 'Similar offers ({n})' : '{n} offers', { n: count })
   return (
-    <button onClick={onClick} aria-label={t('{n} offers', { n: count })} title={t('{n} offers', { n: count })}
-      className="flex shrink-0 items-center gap-1 rounded-full bg-brand-soft px-2 py-1 text-xs font-extrabold text-brand-text active:scale-95">
-      <Tag className="size-3.5" strokeWidth={2.5} /> {count}
+    <button onClick={onClick} aria-label={label} title={label}
+      className={`flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-xs font-extrabold active:scale-95 ${similar ? 'bg-soft text-muted' : 'bg-brand-soft text-brand-text'}`}>
+      <Tag className="size-3.5" strokeWidth={2.5} /> {!similar && count}
     </button>
   )
 }
@@ -80,12 +81,18 @@ const SORTS = {
   unit: { label: 'Price per kg/l', sort: byUnitPrice, directed: true },
 }
 
-/** This week's offers matching a list item, closest match first unless sorted by price. */
-export function OffersSheet({ name, offers, chains, onClose }: {
-  name: string; offers: Offer[]; chains: Chain[]; onClose: () => void
+/**
+ * This week's offers matching a list item, closest match first unless sorted by price.
+ * `similar` (same product type, not confirmed as the item) sits collapsed below them.
+ */
+export function OffersSheet({ name, offers, similar = [], chains, onClose }: {
+  name: string; offers: Offer[]; similar?: Offer[]; chains: Chain[]; onClose: () => void
 }) {
   const [sort, setSort] = useState<keyof typeof SORTS>('match')
   const [desc, setDesc] = useState(false)
+  const [showSimilar, setShowSimilar] = useState(false)
+  // With nothing confirmed, the similar offers are all there is: show them open.
+  const similarOpen = showSimilar || !offers.length
   // Tapping the active price sort flips its direction; picking another sort starts low to high.
   const pick = (k: keyof typeof SORTS) => {
     if (k === sort) setDesc(SORTS[k].directed && !desc)
@@ -113,6 +120,20 @@ export function OffersSheet({ name, offers, chains, onClose }: {
       <ul className="divide-y divide-line">
         {SORTS[sort].sort(offers, desc).map((o) => <OfferRow key={o.id} offer={o} chain={byId.get(o.chain)} />)}
       </ul>
+      {similar.length > 0 && (
+        <>
+          <button onClick={() => setShowSimilar(!similarOpen)} aria-expanded={similarOpen}
+            className="flex items-center gap-1.5 px-1 pt-3 text-xs font-extrabold uppercase tracking-wider text-muted">
+            <ChevronDown className={`size-3.5 transition ${similarOpen ? '' : '-rotate-90'}`} />
+            {t('Similar offers ({n})', { n: similar.length })}
+          </button>
+          {similarOpen && (
+            <ul className="divide-y divide-line">
+              {SORTS[sort].sort(similar, desc).map((o) => <OfferRow key={o.id} offer={o} chain={byId.get(o.chain)} />)}
+            </ul>
+          )}
+        </>
+      )}
       <OffersNote />
     </Sheet>
   )

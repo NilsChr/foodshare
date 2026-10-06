@@ -40,7 +40,7 @@ export default function OffersPage() {
   const list = useMemo(() => {
     // Search: closest headings first. Browsing: biggest discounts first.
     const found = query.trim()
-      ? offersFor(query, index)
+      ? offersFor(query, index).offers
       : [...offers].sort((a, b) => b.discount_pct - a.discount_pct || a.heading.localeCompare(b.heading))
     return chain ? found.filter((o) => o.chain === chain) : found
   }, [query, index, offers, chain])

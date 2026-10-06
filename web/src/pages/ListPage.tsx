@@ -51,16 +51,19 @@ export default function ListPage() {
     [items],
   )
   const suggestions = useMemo(() => synergies(recipes, items), [recipes, items])
-  // This week's offers per open item, from the chains the group chose.
+  // This week's offers per open item, from the chains the group chose. Only `offers` count
+  // (badge, store tip); `similar` is shown below them in the sheet.
   const itemOffers = useMemo(() => {
     const index = indexOffers(offers)
     const map = new Map<string, Offer[]>()
-    if (!index.length) return map
+    const similar = new Map<string, Offer[]>()
+    if (!index.length) return { map, similar }
     for (const i of open) {
-      const found = offersFor(i.name, index, i.product_type)
-      if (found.length) map.set(i.id, found)
+      const found = offersFor(i.name, index, i.product_type, i.offer_matches)
+      if (found.offers.length) map.set(i.id, found.offers)
+      if (found.similar.length) similar.set(i.id, found.similar)
     }
-    return map
+    return { map, similar }
   }, [offers, open])
   // The chosen store with offers on the most open items (needs 2+ stores and 2+ items to be worth saying).
   const storeTip = useMemo(() => {
@@ -69,7 +72,7 @@ export default function ListPage() {
     for (const i of open) {
       // Per store, the offer the item would most likely be bought as: the closest match (offersFor's order).
       const first = new Map<string, Offer>()
-      for (const o of itemOffers.get(i.id) ?? []) if (!first.has(o.chain)) first.set(o.chain, o)
+      for (const o of itemOffers.map.get(i.id) ?? []) if (!first.has(o.chain)) first.set(o.chain, o)
       for (const [chain, o] of first) {
         const e = byChain.get(chain) ?? { items: [], discount: 0, saved: 0, savedItems: 0 }
         byChain.set(chain, {
@@ -248,7 +251,7 @@ export default function ListPage() {
                     <ul className="divide-y divide-line overflow-hidden rounded-2xl bg-card ring-1 ring-line">
                       {g.items.map((i) => (
                         <ItemRow key={i.id} item={i} recipeTitle={recipeTitles.get(i.recipe)} onToggle={toggle} onEdit={setEditing}
-                          offerCount={itemOffers.get(i.id)?.length} onOffers={setOffersOf} />
+                          offerCount={itemOffers.map.get(i.id)?.length} similarCount={itemOffers.similar.get(i.id)?.length} onOffers={setOffersOf} />
                       ))}
                     </ul>
                   )}
@@ -284,7 +287,8 @@ export default function ListPage() {
       </main>
 
       <ItemSheet item={editing} onClose={() => setEditing(null)} />
-      <OffersSheet name={offersOf ? proper(offersOf.name) : ''} offers={offersOf ? itemOffers.get(offersOf.id) ?? [] : []}
+      <OffersSheet name={offersOf ? proper(offersOf.name) : ''} offers={offersOf ? itemOffers.map.get(offersOf.id) ?? [] : []}
+        similar={offersOf ? itemOffers.similar.get(offersOf.id) ?? [] : []}
         chains={chains} onClose={() => setOffersOf(null)} />
       <Sheet open={ordering} onClose={() => setOrdering(false)} title={t('Order sections')}>
         <p className="mb-3 text-sm text-muted">{t('Drag sections into the order you walk the store. Other is always last.')}</p>
@@ -294,9 +298,9 @@ export default function ListPage() {
   )
 }
 
-function ItemRow({ item, recipeTitle, onToggle, onEdit, offerCount, onOffers }: {
+function ItemRow({ item, recipeTitle, onToggle, onEdit, offerCount, similarCount, onOffers }: {
   item: Item; recipeTitle?: string; onToggle: (i: Item) => void; onEdit: (i: Item) => void
-  offerCount?: number; onOffers?: (i: Item) => void
+  offerCount?: number; similarCount?: number; onOffers?: (i: Item) => void
 }) {
   return (
     <li className="flex items-center">
@@ -317,7 +321,8 @@ function ItemRow({ item, recipeTitle, onToggle, onEdit, offerCount, onOffers }: 
           )}
         </span>
       </button>
-      {!!offerCount && onOffers && <OfferBadge count={offerCount} onClick={() => onOffers(item)} />}
+      {onOffers && (offerCount ? <OfferBadge count={offerCount} onClick={() => onOffers(item)} />
+        : !!similarCount && <OfferBadge count={similarCount} similar onClick={() => onOffers(item)} />)}
       <IconButton icon={Pencil} label={t('Edit {name}', { name: item.name })} onClick={() => onEdit(item)} className="mr-1" />
     </li>
   )

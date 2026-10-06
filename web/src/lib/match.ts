@@ -198,11 +198,13 @@ export function indexOffers(offers: Offer[]): OfferIndex {
 }
 
 /**
- * Offers for a list item: headings containing every word of the name (closest first, then
- * cheapest), followed by offers of the same product type that share no words, cheapest first
- * ("kaffe" is type coffee, like "ALI FILTERMALT").
+ * Offers for a list item. `offers`: headings containing every word of the name (closest first,
+ * then cheapest), then offers of the same product type that the server confirmed the name
+ * means (`confirmed`, see pb_hooks/offer_matches.js; "kaffe" ~ "ALI FILTERMALT"), cheapest
+ * first. `similar`: the type's other offers, cheapest first ("parmesan" ~ "SYNNØVE GULOST"),
+ * also all of them while the server has not checked yet (`confirmed` null).
  */
-export function offersFor(name: string, index: OfferIndex, productType = ''): Offer[] {
+export function offersFor(name: string, index: OfferIndex, productType = '', confirmed: string[] | null = null) {
   const words = tokens(name)
   const byWords = words.length
     ? index
@@ -210,13 +212,14 @@ export function offersFor(name: string, index: OfferIndex, productType = ''): Of
       .sort((a, b) => a.words.length - b.words.length || a.offer.price - b.offer.price)
       .map((e) => e.offer)
     : []
-  if (!productType || productType === 'none') return byWords
+  if (!productType || productType === 'none') return { offers: byWords, similar: [] }
   const seen = new Set(byWords.map((o) => o.id))
+  const ok = new Set(confirmed ?? [])
   const byType = index
     .filter((e) => e.offer.product_type === productType && !seen.has(e.offer.id))
     .map((e) => e.offer)
     .sort((a, b) => a.price - b.price)
-  return [...byWords, ...byType]
+  return { offers: [...byWords, ...byType.filter((o) => ok.has(o.id))], similar: byType.filter((o) => !ok.has(o.id)) }
 }
 
 const UNIT = '(?:x|stk|pcs|pk|g|kg|l|dl|ml|cl)'
