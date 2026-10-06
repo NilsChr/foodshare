@@ -21,6 +21,8 @@ RUN apk add --no-cache ca-certificates unzip \
  && apk del unzip
 
 COPY pb_hooks /pb/pb_hooks
+# Schema migrations; PocketBase applies pending ones on start.
+COPY pb_migrations /pb/pb_migrations
 
 VOLUME /pb/pb_data
 EXPOSE 8080
@@ -28,4 +30,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=10s --timeout=5s --start-period=10s \
   CMD wget -qO- http://127.0.0.1:8080/api/health >/dev/null || exit 1
 
-CMD ["/pb/pocketbase", "serve", "--http=0.0.0.0:8080", "--dir=/pb/pb_data", "--hooksDir=/pb/pb_hooks"]
+CMD ["/pb/pocketbase", "serve", "--http=0.0.0.0:8080", "--dir=/pb/pb_data", "--hooksDir=/pb/pb_hooks", "--migrationsDir=/pb/pb_migrations"]

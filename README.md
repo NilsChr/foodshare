@@ -3,7 +3,7 @@
 Shared food planner PWA for families, friends and flatmates: shared live shopping list, recipes, weekly dinner plan.
 
 - `web/` — Vite + React + TypeScript + Tailwind PWA. Talks directly to PocketBase.
-- `pocketbase/setup.mjs` — idempotent schema and API rules. Re-run after editing.
+- `pocketbase/pb_migrations/` — schema and API rules as PocketBase migrations, applied automatically when PocketBase starts. See "Schema changes".
 - `pocketbase/test-rules.mjs` — checks the access rules against the live server with test users.
 - `pocketbase/pb_hooks/` — server hooks (recipe import; merging list items with the same name, `merge_items.pb.js`; grocery offers sync, `offers_sync.pb.js`).
 - `docker-compose.yml` — local PocketBase with schema and demo data. See "Local development".
@@ -13,7 +13,6 @@ Shared food planner PWA for families, friends and flatmates: shared live shoppin
 
 ```sh
 # root .env: POCKETBASE_URL, POCKETBASE_USER, POCKETBASE_PASS (superuser), TEST_USER_PASSWORD
-node --env-file=.env pocketbase/setup.mjs
 node --env-file=.env pocketbase/test-rules.mjs
 
 cd web
@@ -35,9 +34,18 @@ cd web && bun run dev        # app on http://localhost:5173, talks to the local 
 ```
 
 - `pocketbase` builds the same image as production, but uses the hooks from the working tree (PocketBase restarts when they change).
-- `setup` runs `setup.mjs` and `seed-local.mjs`: schema, a demo user and a first offers sync. The demo and superuser logins are in `docker-compose.yml`; they only exist locally.
+- PocketBase applies `pb_migrations/` on start. `setup` runs `seed-local.mjs`: a demo user and a first offers sync. The demo and superuser logins are in `docker-compose.yml`; they only exist locally.
 - Data stays in `pocketbase/pb_data/` (git-ignored). Delete it to start over.
 - Which PocketBase the app uses: `web/.env.development` (local, `bun run dev`) and `web/.env.production` (production, `bun run build` and `bun run dev:prod`). Override in `web/.env.development.local`, e.g. with `PB_PORT=8091 docker compose up`. Mode files win over `web/.env.local`, so an old `.env.local` is ignored for `VITE_POCKETBASE_URL` and can be deleted.
+
+## Schema changes
+
+The schema lives in `pocketbase/pb_migrations/` and ships in the image, so deploying PocketBase also updates the database. PocketBase runs each migration once on start and records it in its `_migrations` table.
+
+- `1759752000_foodshare_schema.js` is the baseline: every collection, field, index and API rule. It is idempotent (creates what is missing, matches fields by name, never deletes), so it also brought databases made with the old `setup.mjs` script up to date.
+- For a change, add a new file named `<unix timestamp>_<what>.js` with `migrate((app) => { ... })`, e.g. find a collection, add a field, `app.save(collection)`. Keep it additive where possible. Locally, restart PocketBase (`docker compose restart pocketbase`) to apply it.
+- Test a migration against a copy of production data before deploying: download a backup, restore it in the local dashboard, restart.
+- There is no automatic rollback; restore a backup if a deploy goes wrong.
 
 ## Data model
 
@@ -87,9 +95,9 @@ The hook ships inside the PocketBase image, so deploying PocketBase deploys the 
 
 ## Deploying PocketBase
 
-`pocketbase/Dockerfile` builds PocketBase v0.40.4 (amd64 or arm64, checksum-verified) with `pb_hooks/` copied in. Data lives in `/pb/pb_data`; it serves on port 8080 and has a health check on `/api/health`.
+`pocketbase/Dockerfile` builds PocketBase v0.40.4 (amd64 or arm64, checksum-verified) with `pb_hooks/` and `pb_migrations/` copied in. Data lives in `/pb/pb_data`; it serves on port 8080 and has a health check on `/api/health`.
 
-Coolify: new resource from the Git repo → Build Pack "Dockerfile", Base Directory `/pocketbase`, port 8080, persistent storage mounted at `/pb/pb_data`. Push to redeploy (hook changes included).
+Coolify: new resource from the Git repo → Build Pack "Dockerfile", Base Directory `/pocketbase`, port 8080, persistent storage mounted at `/pb/pb_data`. Push to redeploy: hook changes and schema migrations are included. Take a backup first when a deploy includes a new migration.
 
 Moving from the old Coolify template service:
 

@@ -1,3 +1,4 @@
-# Only the hooks go into the image; scripts and local data stay out.
+# Only hooks and migrations go into the image; scripts and local data stay out.
 *
 !pb_hooks
+!pb_migrations
