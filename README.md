@@ -7,6 +7,7 @@ Shared food planner PWA for families, friends and flatmates: shared live shoppin
 - `pocketbase/test-rules.mjs` — checks the access rules against the live server with test users.
 - `pocketbase/pb_hooks/` — server hooks (recipe import; merging list items with the same name, `merge_items.pb.js`; grocery offers sync, `offers_sync.pb.js`).
 - `docker-compose.yml` — local PocketBase with schema and demo data. See "Local development".
+- `classifier/` — experiment, not used by the app: a small local model trained on Jev's offer labels, to see how many Jev calls it could replace. See `classifier/README.md`.
 - `pocketbase/Dockerfile` — PocketBase v0.40.4 with the hooks baked in. See "Deploying PocketBase".
 
 ## Setup

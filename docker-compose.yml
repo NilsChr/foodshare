@@ -34,6 +34,14 @@ services:
       - /pb/pocketbase superuser upsert "$$POCKETBASE_USER" "$$POCKETBASE_PASS" --dir=/pb/pb_data
         && exec /pb/pocketbase serve --http=0.0.0.0:8080 --dir=/pb/pb_data --hooksDir=/pb/pb_hooks
 
+  # Experimental offer classifier (classifier/README.md). Not started by default:
+  #   docker compose --profile classifier up classifier
+  classifier:
+    profiles: [classifier]
+    build: { context: ., dockerfile: classifier/Dockerfile }
+    ports: ["${CLASSIFIER_PORT:-8091}:8091"]
+    volumes: ["./classifier/model:/app/classifier/model:ro"]
+
   # One-shot: demo user and a first offers sync. Safe to re-run. (The schema comes from
   # pb_migrations, applied by PocketBase itself.)
   setup:
