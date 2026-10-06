@@ -1,11 +1,10 @@
-import { Tag } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { ArrowDown, ArrowUp, Tag } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
 import { shortDate } from '../lib/dates'
 import { t } from '../lib/i18n'
-import { formatPrice } from '../lib/offers'
+import { byUnitPrice, formatPrice, unitPrice } from '../lib/offers'
 import type { Chain, Offer } from '../lib/pb'
 import { Sheet } from './ui'
-
 
 /** The chain's logo on a white plate (logos are made for white), or its initial in brand color. */
 export function ChainLogo({ chain, className = 'h-6 w-16' }: { chain?: Chain; className?: string }) {
@@ -54,25 +53,65 @@ export function OfferRow({ offer: o, chain, action }: { offer: Offer; chain?: Ch
         <p className="font-extrabold tabular-nums">{formatPrice(o.price)}</p>
         {o.pre_price > o.price && <p className="text-xs text-muted line-through tabular-nums">{formatPrice(o.pre_price)}</p>}
         {o.discount_pct > 0 && <p className="text-xs font-bold text-brand-text">−{o.discount_pct}%</p>}
+        <UnitPrice offer={o} />
         {action}
       </div>
     </li>
   )
 }
 
+/** "fra 99,83 kr/kg" under the price, when the flyer gives a size. */
+function UnitPrice({ offer }: { offer: Offer }) {
+  const u = unitPrice(offer)
+  // A loose 1 kg / single piece offer is already priced per unit.
+  if (!u || Math.abs(u.from - offer.price) < 0.01) return null
+  const text = `${formatPrice(u.from)}/${t(u.unit)}`
+  return <p className="text-xs text-muted tabular-nums">{u.range ? t('from {price}', { price: text }) : text}</p>
+}
+
 export function OffersNote() {
   return <p className="px-1 pt-2 text-xs text-muted">{t('From this week’s flyers. Prices and stock can vary between stores.')}</p>
 }
 
-/** This week's offers matching a list item, closest match first. */
+// `desc` sorts dearest first; best match has no direction.
+const SORTS = {
+  match: { label: 'Best match', sort: (offers: Offer[]) => offers, directed: false },
+  price: { label: 'Price', sort: (offers: Offer[], desc: boolean) => [...offers].sort((a, b) => (desc ? b.price - a.price : a.price - b.price)), directed: true },
+  unit: { label: 'Price per kg/l', sort: byUnitPrice, directed: true },
+}
+
+/** This week's offers matching a list item, closest match first unless sorted by price. */
 export function OffersSheet({ name, offers, chains, onClose }: {
   name: string; offers: Offer[]; chains: Chain[]; onClose: () => void
 }) {
+  const [sort, setSort] = useState<keyof typeof SORTS>('match')
+  const [desc, setDesc] = useState(false)
+  // Tapping the active price sort flips its direction; picking another sort starts low to high.
+  const pick = (k: keyof typeof SORTS) => {
+    if (k === sort) setDesc(SORTS[k].directed && !desc)
+    else {
+      setSort(k)
+      setDesc(false)
+    }
+  }
+  const Arrow = desc ? ArrowDown : ArrowUp
   const byId = new Map(chains.map((c) => [c.id, c]))
   return (
     <Sheet open={!!name} onClose={onClose} title={t('Offers: {name}', { name })}>
+      {offers.length > 1 && (
+        <div className="flex gap-1.5 overflow-x-auto [scrollbar-width:none]">
+          {(Object.keys(SORTS) as (keyof typeof SORTS)[]).map((k) => (
+            <button key={k} onClick={() => pick(k)} aria-pressed={sort === k}
+              aria-label={sort === k && SORTS[k].directed ? `${t(SORTS[k].label)}, ${t(desc ? 'high to low' : 'low to high')}` : undefined}
+              className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-sm font-bold transition ${sort === k ? 'bg-brand text-brand-ink' : 'bg-soft'}`}>
+              {t(SORTS[k].label)}
+              {sort === k && SORTS[k].directed && <Arrow className="size-4" strokeWidth={2.5} />}
+            </button>
+          ))}
+        </div>
+      )}
       <ul className="divide-y divide-line">
-        {offers.map((o) => <OfferRow key={o.id} offer={o} chain={byId.get(o.chain)} />)}
+        {SORTS[sort].sort(offers, desc).map((o) => <OfferRow key={o.id} offer={o} chain={byId.get(o.chain)} />)}
       </ul>
       <OffersNote />
     </Sheet>

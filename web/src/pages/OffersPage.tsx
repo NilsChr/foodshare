@@ -1,6 +1,6 @@
-import { Check, Plus, Search, Store, Tag } from 'lucide-react'
+import { Check, ChevronLeft, Plus, Search, Store, Tag } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { ChainLogo, OfferRow, OffersNote } from '../components/offers'
 import { Button, Empty, ErrorText, IconButton, Input, PageHeader } from '../components/ui'
 import { useMe } from '../lib/auth'
@@ -22,6 +22,10 @@ function itemName(offer: Offer) {
 export default function OffersPage() {
   const me = useMe()
   const { space, chains, offers, items, categories, patchItem } = useSpace()
+  const navigate = useNavigate()
+  const location = useLocation()
+  // Opened straight from a link or reload there is no page to go back to; go to the list.
+  const back = <IconButton icon={ChevronLeft} label={t('Back')} onClick={() => (location.key === 'default' ? navigate('/list') : navigate(-1))} className="-ml-2 text-ink" />
   const [query, setQuery] = useState('')
   const [chain, setChain] = useState('')
   const [category, setCategory] = useState('')
@@ -64,7 +68,7 @@ export default function OffersPage() {
   if (!stores.length) {
     return (
       <>
-        <PageHeader title={t('Offers')} />
+        <PageHeader title={t('Offers')} back={back} />
         <main className="mx-auto max-w-2xl px-4">
           <Empty icon={Store} title={t('No stores yet')}>
             {t('Add the stores you shop at to see this week’s offers from them on the list.')}
@@ -79,7 +83,7 @@ export default function OffersPage() {
 
   return (
     <>
-      <PageHeader title={t('Offers')} />
+      <PageHeader title={t('Offers')} back={back} />
       <main className="mx-auto max-w-2xl space-y-3 px-4">
         <div className="sticky top-[calc(4rem+env(safe-area-inset-top))] z-10 -mx-4 space-y-2 bg-bg/85 px-4 pb-2 backdrop-blur-md">
           <div className="relative">

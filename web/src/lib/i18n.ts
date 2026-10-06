@@ -325,6 +325,15 @@ const NO: Record<string, string> = {
   '{n} offers': '{n} tilbud',
   'Offers: {name}': 'Tilbud: {name}',
   'until {date}': 'til {date}',
+  'Best match': 'Beste treff',
+  Price: 'Pris',
+  'Price per kg/l': 'Pris pr. kg/l',
+  'from {price}': 'fra {price}',
+  'low to high': 'lav til høy',
+  'high to low': 'høy til lav',
+  kg: 'kg',
+  l: 'l',
+  pcs: 'stk',
   'From this week’s flyers. Prices and stock can vary between stores.': 'Fra ukens kundeaviser. Pris og utvalg kan variere mellom butikkene.',
 
   // Default store sections

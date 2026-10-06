@@ -40,3 +40,35 @@ export const formatPrice = (n: number, whole = false) =>
 
 /** What the offer saves against the flyer's before-price; 0 when the flyer gives none. */
 export const saving = (o: Offer) => (o.pre_price > o.price ? o.pre_price - o.price : 0)
+
+// Flyer units to the base unit prices are compared in, and the factor to get there.
+const BASE_UNIT: Record<string, [unit: 'kg' | 'l' | 'pcs', factor: number]> = {
+  g: ['kg', 0.001], kg: ['kg', 1], ml: ['l', 0.001], cl: ['l', 0.01], dl: ['l', 0.1], l: ['l', 1], pcs: ['pcs', 1],
+}
+export const UNIT_ORDER = ['kg', 'l', 'pcs'] as const
+
+/**
+ * Price per kg, litre or piece. A size range ("525–600 g") gives a range; `from` is the
+ * cheapest end. Null when the flyer gives no usable size.
+ */
+export function unitPrice(o: Offer) {
+  const base = BASE_UNIT[o.unit]
+  if (!base || !(o.size_from > 0) || !(o.price > 0)) return null
+  const [unit, factor] = base
+  const pieces = o.pieces > 0 ? o.pieces : 1
+  // Some flyers fill size_to with junk smaller than size_from; treat as a single size.
+  const largest = o.size_to > o.size_from ? o.size_to : o.size_from
+  const from = o.price / (largest * factor * pieces)
+  const to = o.price / (o.size_from * factor * pieces)
+  return { unit, from, range: to - from >= 0.01 }
+}
+
+/** By price per kg/l/piece (cheapest first, or dearest with `desc`), grouped by unit; offers without a size last. */
+export function byUnitPrice(offers: Offer[], desc = false) {
+  const dir = desc ? -1 : 1
+  const rank = (o: Offer) => {
+    const u = unitPrice(o)
+    return u ? [UNIT_ORDER.indexOf(u.unit), u.from] : [UNIT_ORDER.length, 0]
+  }
+  return offers.map((o) => [o, rank(o)] as const).sort(([, a], [, b]) => a[0] - b[0] || dir * (a[1] - b[1])).map(([o]) => o)
+}
