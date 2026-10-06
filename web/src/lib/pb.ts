@@ -13,6 +13,8 @@ export interface User extends RecordModel {
 export interface Space extends RecordModel {
   name: string
   owner: string
+  /** Grocery chains whose offers the group compares. */
+  chains: string[]
 }
 
 export interface Membership extends RecordModel {
@@ -85,6 +87,33 @@ export interface PantryItem extends RecordModel {
   added_by: string
 }
 
+/** A grocery chain with flyer offers. Shared by everyone, written by the server. */
+export interface Chain extends RecordModel {
+  tjek_id: string
+  name: string
+  logo: string
+  /** 6 hex digits, no "#". */
+  color: string
+}
+
+/** This week's flyer offer from a chain. `pre_price`/`discount_pct` are 0 when the flyer gives no before-price. */
+export interface Offer extends RecordModel {
+  chain: string
+  heading: string
+  description: string
+  price: number
+  pre_price: number
+  discount_pct: number
+  size_from: number
+  size_to: number
+  unit: string
+  pieces: number
+  image: string
+  run_till: string
+  /** Store section key (see OFFER_CATEGORIES); empty until classified. */
+  category: string
+}
+
 export const col = {
   spaces: () => pb.collection<Space>('spaces'),
   memberships: () => pb.collection<Membership>('memberships'),
@@ -95,6 +124,8 @@ export const col = {
   meals: () => pb.collection<Meal>('meals'),
   pantry: () => pb.collection<PantryItem>('pantry'),
   users: () => pb.collection<User>('users'),
+  chains: () => pb.collection<Chain>('chains'),
+  offers: () => pb.collection<Offer>('offers'),
 }
 
 export function recipeImage(recipe: Recipe, thumb?: '400x300' | '800x600' | '120x120') {

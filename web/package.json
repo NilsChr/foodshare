@@ -1,10 +1,11 @@
 {
   "name": "web",
   "private": true,
-  "version": "0.0.3",
+  "version": "0.0.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:prod": "vite --mode production",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",

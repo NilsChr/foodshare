@@ -145,3 +145,25 @@ export function sectionTitle(leader: Category, categories: Category[]) {
   const rest = names.slice(1).map((n) => n.toLocaleLowerCase(locale))
   return t('{a} & {b}', { a: [names[0], ...rest.slice(0, -1)].join(', '), b: rest[rest.length - 1] })
 }
+
+// Offer categories (set on the server by pocketbase/pb_hooks/offers_classify.js) are the
+// default sections by key, plus "other".
+const OFFER_SECTIONS: Record<string, string> = {
+  vegetables: 'Vegetables', fruit: 'Fruit', bakery: 'Bakery', meat_fish: 'Meat & fish', dairy_eggs: 'Dairy & eggs',
+  pantry: 'Pantry', frozen: 'Frozen', snacks: 'Snacks', drinks: 'Drinks', household: 'Household',
+}
+export const OFFER_CATEGORIES = [...Object.keys(OFFER_SECTIONS), 'other']
+
+export function offerCategoryName(key: string) {
+  return OFFER_SECTIONS[key] ? t(OFFER_SECTIONS[key]) : t('Other')
+}
+
+export function offerCategoryIcon(key: string) {
+  return categoryIcon(DEFAULT_CATEGORIES.find((c) => c.name === OFFER_SECTIONS[key])?.icon)
+}
+
+/** The group's section for an offer category: its default section, if the group still has it under that name. */
+export function sectionForOffer(key: string, categories: Category[]) {
+  const name = OFFER_SECTIONS[key]
+  return (name && categories.find((c) => variants(name).includes(c.name))?.id) || ''
+}

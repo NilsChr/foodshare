@@ -1,0 +1,41 @@
+# Local backend: the production PocketBase image with schema and demo data.
+#   docker compose up                -> PocketBase on http://localhost:8090 (dashboard: /_/)
+#   PB_PORT=8091 docker compose up   -> another port; set web/.env.development.local to match
+# Run the web app with `bun run dev` in web/.
+# Data stays in ./pocketbase/pb_data between runs; delete that folder to start over.
+# The credentials below only exist in this local database.
+
+x-local-env: &local-env
+  POCKETBASE_USER: admin@foodshare.localhost
+  POCKETBASE_PASS: localadmin123
+  DEMO_USER: demo@foodshare.localhost
+  DEMO_PASS: demopass123
+
+services:
+  pocketbase:
+    build: ./pocketbase
+    environment:
+      <<: *local-env
+      # Offer categories (optional); compose reads it from the root .env.
+      TYPESAFE_API_KEY: ${TYPESAFE_API_KEY:-}
+    ports: ["${PB_PORT:-8090}:8080"]
+    volumes:
+      - ./pocketbase/pb_data:/pb/pb_data
+      # Hooks from the working tree; PocketBase restarts when they change.
+      - ./pocketbase/pb_hooks:/pb/pb_hooks
+    command:
+      - sh
+      - -c
+      - /pb/pocketbase superuser upsert "$$POCKETBASE_USER" "$$POCKETBASE_PASS" --dir=/pb/pb_data
+        && exec /pb/pocketbase serve --http=0.0.0.0:8080 --dir=/pb/pb_data --hooksDir=/pb/pb_hooks
+
+  # One-shot: schema, demo user and a first offers sync. Safe to re-run.
+  setup:
+    image: node:22-alpine
+    depends_on:
+      pocketbase: { condition: service_healthy }
+    environment:
+      <<: *local-env
+      POCKETBASE_URL: http://pocketbase:8080
+    volumes: ["./pocketbase:/pocketbase:ro"]
+    command: sh -c "node /pocketbase/setup.mjs && node /pocketbase/seed-local.mjs"

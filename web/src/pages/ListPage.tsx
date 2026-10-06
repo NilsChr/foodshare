@@ -1,14 +1,16 @@
 import {
-  ArrowUpDown, BookOpen, Check, ChevronDown, Layers, List, Pencil, Plus, ShoppingBasket, Sparkles, Trash2,
+  ArrowUpDown, BookOpen, Check, ChevronDown, ChevronRight, Layers, List, Pencil, Plus, ShoppingBasket, Sparkles, Store, Tag, Trash2,
 } from 'lucide-react'
 import { useMemo, useState, type FormEvent } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
+import { ChainLogo, OfferBadge, OffersSheet } from '../components/offers'
+import { formatPrice, saving } from '../lib/offers'
 import SectionOrder from '../components/SectionOrder'
 import { Button, Empty, ErrorText, Field, IconButton, Input, PageHeader, Sheet, Spinner } from '../components/ui'
 import { useMe } from '../lib/auth'
-import { categorize, normalize, parseEntry, proper, synergies } from '../lib/match'
+import { categorize, indexOffers, normalize, offersFor, parseEntry, proper, synergies } from '../lib/match'
 import { categoryIcon, categoryName, learnKeyword, sectionLeader, sectionTitle } from '../lib/categories'
-import { col, errorMessage, recipeImage, type Category, type Item } from '../lib/pb'
+import { col, errorMessage, recipeImage, type Category, type Chain, type Item, type Offer } from '../lib/pb'
 import { useSpace } from '../lib/space'
 import { t, tn } from '../lib/i18n'
 
@@ -32,13 +34,15 @@ function readGrouped() {
 
 export default function ListPage() {
   const me = useMe()
-  const { space, items, recipes, categories, loading, patchItem, removeItem } = useSpace()
+  const navigate = useNavigate()
+  const { space, items, recipes, categories, chains, offers, loading, patchItem, removeItem } = useSpace()
   const [text, setText] = useState('')
   const [grouped, setGrouped] = useState(readGrouped)
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [ordering, setOrdering] = useState(false)
   const [showChecked, setShowChecked] = useState(false)
   const [editing, setEditing] = useState<Item | null>(null)
+  const [offersOf, setOffersOf] = useState<Item | null>(null)
   const [error, setError] = useState('')
 
   const open = useMemo(() => items.filter((i) => !i.checked).sort((a, b) => a.created.localeCompare(b.created)), [items])
@@ -47,6 +51,39 @@ export default function ListPage() {
     [items],
   )
   const suggestions = useMemo(() => synergies(recipes, items), [recipes, items])
+  // This week's offers per open item, from the chains the group chose.
+  const itemOffers = useMemo(() => {
+    const index = indexOffers(offers)
+    const map = new Map<string, Offer[]>()
+    if (!index.length) return map
+    for (const i of open) {
+      const found = offersFor(i.name, index)
+      if (found.length) map.set(i.id, found)
+    }
+    return map
+  }, [offers, open])
+  // The chosen store with offers on the most open items (needs 2+ stores and 2+ items to be worth saying).
+  const storeTip = useMemo(() => {
+    if ((space.chains?.length ?? 0) < 2) return null
+    const byChain = new Map<string, { items: Item[]; discount: number; saved: number; savedItems: number }>()
+    for (const i of open) {
+      // Per store, the offer the item would most likely be bought as: the closest match (offersFor's order).
+      const first = new Map<string, Offer>()
+      for (const o of itemOffers.get(i.id) ?? []) if (!first.has(o.chain)) first.set(o.chain, o)
+      for (const [chain, o] of first) {
+        const e = byChain.get(chain) ?? { items: [], discount: 0, saved: 0, savedItems: 0 }
+        byChain.set(chain, {
+          items: [...e.items, i], discount: e.discount + o.discount_pct,
+          saved: e.saved + saving(o), savedItems: e.savedItems + (saving(o) ? 1 : 0),
+        })
+      }
+    }
+    // Most items first; equal counts go to the bigger total discount.
+    const ranked = [...byChain].map(([chain, e]) => ({ chain: chains.find((c) => c.id === chain), ...e }))
+      .filter((r) => r.chain)
+      .sort((a, b) => b.items.length - a.items.length || b.discount - a.discount)
+    return ranked[0]?.items.length >= 2 ? ranked : null
+  }, [space.chains, open, itemOffers, chains])
   const recipeTitles = useMemo(() => new Map(recipes.map((r) => [r.id, r.title])), [recipes])
 
   // Names to autocomplete: things bought before and recipe ingredients.
@@ -146,6 +183,7 @@ export default function ListPage() {
   return (
     <>
       <PageHeader title={t('Shopping list')}>
+        <IconButton icon={Tag} label={t('Offers')} onClick={() => navigate('/offers')} />
         {items.length > 0 && (
           <IconButton icon={Trash2} label={t('Clear list')}
             onClick={() => remove(items, tn(items.length, 'Remove {n} item from the list?', 'Remove all {n} items from the list?'))} />
@@ -172,6 +210,7 @@ export default function ListPage() {
 
         {loading ? <Spinner /> : (
           <>
+            {storeTip && <StoreTip ranked={storeTip} total={open.length} />}
             {suggestions.length > 0 && <Synergies suggestions={suggestions} />}
 
             {!open.length && !checked.length && (
@@ -208,7 +247,8 @@ export default function ListPage() {
                   {!isCollapsed && (
                     <ul className="divide-y divide-line overflow-hidden rounded-2xl bg-card ring-1 ring-line">
                       {g.items.map((i) => (
-                        <ItemRow key={i.id} item={i} recipeTitle={recipeTitles.get(i.recipe)} onToggle={toggle} onEdit={setEditing} />
+                        <ItemRow key={i.id} item={i} recipeTitle={recipeTitles.get(i.recipe)} onToggle={toggle} onEdit={setEditing}
+                          offerCount={itemOffers.get(i.id)?.length} onOffers={setOffersOf} />
                       ))}
                     </ul>
                   )}
@@ -244,6 +284,8 @@ export default function ListPage() {
       </main>
 
       <ItemSheet item={editing} onClose={() => setEditing(null)} />
+      <OffersSheet name={offersOf ? proper(offersOf.name) : ''} offers={offersOf ? itemOffers.get(offersOf.id) ?? [] : []}
+        chains={chains} onClose={() => setOffersOf(null)} />
       <Sheet open={ordering} onClose={() => setOrdering(false)} title={t('Order sections')}>
         <p className="mb-3 text-sm text-muted">{t('Drag sections into the order you walk the store. Other is always last.')}</p>
         <SectionOrder categories={categories} />
@@ -252,8 +294,9 @@ export default function ListPage() {
   )
 }
 
-function ItemRow({ item, recipeTitle, onToggle, onEdit }: {
+function ItemRow({ item, recipeTitle, onToggle, onEdit, offerCount, onOffers }: {
   item: Item; recipeTitle?: string; onToggle: (i: Item) => void; onEdit: (i: Item) => void
+  offerCount?: number; onOffers?: (i: Item) => void
 }) {
   return (
     <li className="flex items-center">
@@ -274,8 +317,48 @@ function ItemRow({ item, recipeTitle, onToggle, onEdit }: {
           )}
         </span>
       </button>
+      {!!offerCount && onOffers && <OfferBadge count={offerCount} onClick={() => onOffers(item)} />}
       <IconButton icon={Pencil} label={t('Edit {name}', { name: item.name })} onClick={() => onEdit(item)} className="mr-1" />
     </li>
+  )
+}
+
+/** Recommends the store with offers on the most items on the list, with how the others compare. */
+function StoreTip({ ranked, total }: { ranked: { chain?: Chain; items: Item[]; saved: number; savedItems: number }[]; total: number }) {
+  const [hidden, setHidden] = useState(false)
+  if (hidden) return null
+  const [best, ...rest] = ranked
+  return (
+    <section className="rounded-3xl bg-brand-soft p-4">
+      <div className="mb-2 flex items-center gap-2">
+        <Store className="size-5 text-brand-text" />
+        <h2 className="flex-1 font-extrabold">{t('Best store this week')}</h2>
+        <button className="text-sm font-bold text-brand-text" onClick={() => setHidden(true)}>{t('Hide')}</button>
+      </div>
+      <Link to="/offers" className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-sm">
+        <ChainLogo chain={best.chain} className="h-9 w-20" />
+        <span className="min-w-0 flex-1">
+          <span className="block font-extrabold">{t('Offers on {n} of {total} items', { n: best.items.length, total })}</span>
+          <span className="block truncate text-xs text-muted">{best.items.map((i) => proper(i.name)).join(', ')}</span>
+          {best.saved > 0 && (
+            <span className="block text-xs">
+              <b className="text-brand-text">{t('Save about {amount}', { amount: formatPrice(best.saved, true) })}</b>{' '}
+              <span className="text-muted">{tn(best.savedItems, '(before-price known for {n} item)', '(before-price known for {n} items)')}</span>
+            </span>
+          )}
+        </span>
+        <ChevronRight className="size-5 shrink-0 text-muted" />
+      </Link>
+      {rest.length > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 px-1 text-xs font-bold text-muted">
+          {rest.map((r) => (
+            <span key={r.chain!.id} className="flex items-center gap-1.5">
+              <ChainLogo chain={r.chain} className="h-5 w-12" /> {r.items.length}
+            </span>
+          ))}
+        </div>
+      )}
+    </section>
   )
 }
 

@@ -47,7 +47,13 @@ const MEMBER = "space.memberships_via_space.user ?= @request.auth.id";
 const collections = [
   {
     name: "spaces",
-    fields: [text("name", { required: true, max: 80 }), rel("owner", "users", { required: true }), ...timestamps],
+    fields: [
+      text("name", { required: true, max: 80 }),
+      rel("owner", "users", { required: true }),
+      // Grocery chains whose offers the group compares; none = offers are not shown.
+      rel("chains", "chains", { maxSelect: 99 }),
+      ...timestamps,
+    ],
     rules: {
       listRule: "owner = @request.auth.id || memberships_via_space.user ?= @request.auth.id",
       viewRule: "owner = @request.auth.id || memberships_via_space.user ?= @request.auth.id",
@@ -183,6 +189,68 @@ const collections = [
       ...timestamps,
     ],
     rules: "member",
+  },
+  {
+    // Grocery chains with flyer offers, shared by everyone. Written by the offers_sync hook.
+    name: "chains",
+    fields: [
+      text("tjek_id", { required: true, max: 20 }),
+      text("name", { required: true, max: 40 }),
+      { name: "logo", type: "url" },
+      // Brand color as 6 hex digits, no "#".
+      text("color", { max: 6 }),
+      ...timestamps,
+    ],
+    indexes: ["CREATE UNIQUE INDEX idx_chains_tjek_id ON chains (tjek_id)"],
+    rules: {
+      listRule: '@request.auth.id != ""',
+      viewRule: '@request.auth.id != ""',
+      createRule: null,
+      updateRule: null,
+      deleteRule: null,
+    },
+  },
+  {
+    // This week's grocery flyer offers, shared by everyone. Written only by the
+    // offers_sync hook, which replaces the contents on each run.
+    name: "offers",
+    fields: [
+      // Hash of chain, product, price, size and period; identifies an offer across syncs.
+      text("key", { required: true, max: 32 }),
+      rel("chain", "chains", { required: true, cascadeDelete: true }),
+      text("heading", { required: true, max: 200 }),
+      text("description", { max: 1000 }),
+      { name: "price", type: "number", min: 0 },
+      // Only set when the flyer gives a before-price; "-40%" offers often have none.
+      { name: "pre_price", type: "number", min: 0 },
+      { name: "discount_pct", type: "number", min: 0, max: 100 },
+      { name: "size_from", type: "number", min: 0 },
+      { name: "size_to", type: "number", min: 0 },
+      text("unit", { max: 20 }),
+      { name: "pieces", type: "number", min: 0 },
+      { name: "image", type: "url" },
+      { name: "run_from", type: "date" },
+      { name: "run_till", type: "date" },
+      // Store section, set by the offers_classify hook; empty until classified.
+      {
+        name: "category",
+        type: "select",
+        maxSelect: 1,
+        values: ["vegetables", "fruit", "bakery", "meat_fish", "dairy_eggs", "pantry", "frozen", "snacks", "drinks", "household", "other"],
+      },
+      ...timestamps,
+    ],
+    indexes: [
+      "CREATE UNIQUE INDEX idx_offers_key ON offers (key)",
+      "CREATE INDEX idx_offers_chain ON offers (chain)",
+    ],
+    rules: {
+      listRule: '@request.auth.id != ""',
+      viewRule: '@request.auth.id != ""',
+      createRule: null,
+      updateRule: null,
+      deleteRule: null,
+    },
   },
 ];
 

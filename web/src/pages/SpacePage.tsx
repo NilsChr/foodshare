@@ -1,15 +1,17 @@
 import {
-  Check, Languages, Link2, Crown, LogOut, Pencil, Plus, Send, Trash2, UserMinus, X,
+  Check, ChevronRight, Newspaper, Languages, Link2, Crown, LogOut, Pencil, Plus, Send, Trash2, UserMinus, X,
 } from 'lucide-react'
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { Link } from 'react-router'
 import Invites from '../components/Invites'
+import { ChainLogo } from '../components/offers'
 import SectionOrder from '../components/SectionOrder'
 import { Avatar, Button, ErrorText, Field, IconButton, Input, PageHeader, Sheet } from '../components/ui'
 import { useMe } from '../lib/auth'
 import { CATEGORY_ICONS, categoryIcon, categoryName, groupMembers } from '../lib/categories'
-import { col, displayName, errorMessage, pb, type Category, type Invite } from '../lib/pb'
+import { col, displayName, errorMessage, pb, type Category, type Chain, type Invite } from '../lib/pb'
 import { useSpace, useSpaces } from '../lib/space'
-import { lang, setLang, t } from '../lib/i18n'
+import { lang, setLang, t, tn } from '../lib/i18n'
 
 function Section({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
   return (
@@ -81,6 +83,8 @@ export default function SpacePage() {
           </div>
           <InviteForm />
         </Section>
+
+        <Stores />
 
         <Categories />
 
@@ -220,6 +224,110 @@ function InviteForm() {
         </div>
       ))}
     </div>
+  )
+}
+
+/** The chains whose offers the group sees. Saved on the space, so it applies to every member. */
+function Stores() {
+  const { reload } = useSpaces()
+  const { space, chains } = useSpace()
+  const [adding, setAdding] = useState(false)
+  const [error, setError] = useState('')
+  const selected = chains.filter((c) => space.chains?.includes(c.id))
+
+  async function save(ids: string[]) {
+    setError('')
+    try {
+      await col.spaces().update(space.id, { chains: ids })
+      await reload()
+    } catch (err) {
+      setError(errorMessage(err))
+      throw err
+    }
+  }
+
+  return (
+    <Section title={t('Stores')} action={
+      <button className="flex items-center gap-1 text-sm font-bold text-brand-text" onClick={() => setAdding(true)}>
+        <Plus className="size-4" /> {t('Add')}
+      </button>
+    }>
+      {selected.length ? (
+        <div className={card}>
+          {selected.map((c) => (
+            <div key={c.id} className="flex items-center gap-3 py-2 pl-4 pr-1">
+              <ChainLogo chain={c} className="h-7 w-16" />
+              <span className="flex-1 truncate font-bold">{c.name}</span>
+              <IconButton icon={X} label={t('Remove {name}', { name: c.name })}
+                onClick={() => save(space.chains.filter((id) => id !== c.id)).catch(() => {})} />
+            </div>
+          ))}
+          <Link to="/offers" className="flex items-center gap-3 px-4 py-3 font-bold text-brand-text hover:bg-soft">
+            <Newspaper className="size-5" />
+            <span className="flex-1">{t('See flyer offers')}</span>
+            <ChevronRight className="size-5" />
+          </Link>
+        </div>
+      ) : (
+        <p className="px-1 text-sm text-muted">
+          {t('Add the stores you shop at to see this week’s offers from them on the list.')}
+        </p>
+      )}
+      <ErrorText error={error} />
+      <AddStoresSheet open={adding} onClose={() => setAdding(false)}
+        options={chains.filter((c) => !space.chains?.includes(c.id))}
+        onAdd={(ids) => save([...(space.chains ?? []), ...ids])} />
+    </Section>
+  )
+}
+
+function AddStoresSheet({ open, onClose, options, onAdd }: {
+  open: boolean; onClose: () => void; options: Chain[]; onAdd: (ids: string[]) => Promise<void>
+}) {
+  const [picked, setPicked] = useState<string[]>([])
+  const [busy, setBusy] = useState(false)
+  useEffect(() => {
+    if (open) setPicked([])
+  }, [open])
+
+  async function add() {
+    setBusy(true)
+    try {
+      await onAdd(picked)
+      onClose()
+    } catch {
+      // The error shows under the store list.
+      onClose()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Sheet open={open} onClose={onClose} title={t('Add stores')}>
+      {options.length ? (
+        <div className="space-y-4">
+          <div className="grid gap-2 sm:grid-cols-2">
+            {options.map((c) => {
+              const on = picked.includes(c.id)
+              return (
+                <button key={c.id} onClick={() => setPicked(on ? picked.filter((id) => id !== c.id) : [...picked, c.id])} aria-pressed={on}
+                  className={`flex items-center gap-2 rounded-2xl p-2 pr-3 text-left text-sm font-bold ring-1 transition active:scale-[0.98] ${on ? 'bg-brand-soft ring-brand' : 'bg-card ring-line'}`}>
+                  <ChainLogo chain={c} className="h-7 w-16" />
+                  <span className="min-w-0 flex-1 truncate">{c.name}</span>
+                  {on && <Check className="size-4 shrink-0 text-brand-text" strokeWidth={3} />}
+                </button>
+              )
+            })}
+          </div>
+          <Button icon={Plus} className="w-full" busy={busy} disabled={!picked.length} onClick={add}>
+            {picked.length ? tn(picked.length, 'Add {n} store', 'Add {n} stores') : t('Add stores')}
+          </Button>
+        </div>
+      ) : (
+        <p className="text-sm text-muted">{t('All stores are added.')}</p>
+      )}
+    </Sheet>
   )
 }
 

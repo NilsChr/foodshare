@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useMe } from './auth'
 import { createDefaultCategories } from './categories'
-import { col, type Category, type Invite, type Item, type Meal, type Membership, type PantryItem, type Recipe, type Space } from './pb'
+import { useOffers } from './offers'
+import { col, type Category, type Chain, type Invite, type Item, type Meal, type Membership, type Offer, type PantryItem, type Recipe, type Space } from './pb'
 import { useLiveRecords } from './realtime'
 
 const CURRENT_KEY = 'foodshare.space'
@@ -108,6 +109,10 @@ interface SpaceData {
   meals: Meal[]
   pantry: PantryItem[]
   members: Membership[]
+  /** Every chain with flyer offers. */
+  chains: Chain[]
+  /** This week's offers from the chains the group chose. */
+  offers: Offer[]
   loading: boolean
   patchItem: (item: Item) => void
   removeItem: (id: string) => void
@@ -129,6 +134,7 @@ export function SpaceDataProvider({ space, children }: { space: Space; children:
   const meals = useLiveRecords(col.meals, space.id, 'date')
   const pantry = useLiveRecords(col.pantry, space.id)
   const [members, setMembers] = useState<Membership[]>([])
+  const { chains, offers } = useOffers(space.chains ?? [])
 
   const reloadMembers = useCallback(() => {
     col.memberships()
@@ -146,6 +152,8 @@ export function SpaceDataProvider({ space, children }: { space: Space; children:
       meals: meals.records,
       pantry: [...pantry.records].sort((a, b) => a.name.localeCompare(b.name)),
       members,
+      chains,
+      offers,
       loading: items.loading || recipes.loading || categories.loading,
       patchItem: items.patch,
       removeItem: items.remove,
@@ -158,7 +166,7 @@ export function SpaceDataProvider({ space, children }: { space: Space; children:
     }),
     // patch/remove helpers only close over setState.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [space, items.records, recipes.records, categories.records, meals.records, pantry.records, members, items.loading, recipes.loading, categories.loading, reloadMembers],
+    [space, items.records, recipes.records, categories.records, meals.records, pantry.records, members, chains, offers, items.loading, recipes.loading, categories.loading, reloadMembers],
   )
   return <SpaceDataContext.Provider value={value}>{children}</SpaceDataContext.Provider>
 }

@@ -1,7 +1,7 @@
 // Fuzzy name matching shared by category keywords, recipe-vs-list status and synergy suggestions.
 // Handles plurals ("tomato"/"tomatoes", "tomat"/"tomater") and Norwegian compounds ("kyllingfilet" ~ "kylling").
 import { locale } from './i18n'
-import type { Category, Item, PantryItem, Recipe } from './pb'
+import type { Category, Item, Offer, PantryItem, Recipe } from './pb'
 
 const STOPWORDS = new Set([
   'a', 'an', 'and', 'of', 'the', 'fresh', 'chopped', 'diced', 'sliced', 'large', 'small', 'medium', 'to', 'taste',
@@ -171,6 +171,39 @@ export function synergies(recipes: Recipe[], items: Item[], limit = 3): Synergy[
     .filter((s) => s.matched.length >= 2 || (s.matched.length === 1 && s.missing.length <= 1))
     .sort((a, b) => b.matched.length - a.matched.length || a.missing.length - b.missing.length)
     .slice(0, limit)
+}
+
+/**
+ * Offer word `o` is item word `w`, a plural of it, or a compound ending in it ("lettmelk" ~ "melk",
+ * "grillpølser" ~ "pølse"). Stricter than wordMatch: "kylling" does not match "kyllingkrydder".
+ */
+function offerWordMatch(w: string, o: string) {
+  if (w === o) return true
+  if (w.length < 3) return false
+  for (let cut = 0; cut <= 3; cut++) {
+    const base = cut ? o.slice(0, -cut) : o
+    if (base.length < w.length) break
+    if (base === w || (w.length >= 4 && base.endsWith(w))) return true
+  }
+  // Item in plural, offer in singular: "tomater" ~ "tomat".
+  return o.length >= 4 && w.startsWith(o) && w.length - o.length <= 3
+}
+
+export type OfferIndex = { offer: Offer; words: string[] }[]
+
+/** Tokenize offer headings once, for repeated offersFor lookups. */
+export function indexOffers(offers: Offer[]): OfferIndex {
+  return offers.map((offer) => ({ offer, words: tokens(offer.heading) }))
+}
+
+/** Offers whose heading contains every word of the name. Closest headings first, then cheapest. */
+export function offersFor(name: string, index: OfferIndex): Offer[] {
+  const words = tokens(name)
+  if (!words.length) return []
+  return index
+    .filter((e) => words.every((w) => e.words.some((o) => offerWordMatch(w, o))))
+    .sort((a, b) => a.words.length - b.words.length || a.offer.price - b.offer.price)
+    .map((e) => e.offer)
 }
 
 const UNIT = '(?:x|stk|pcs|pk|g|kg|l|dl|ml|cl)'
