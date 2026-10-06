@@ -174,20 +174,23 @@ export function synergies(recipes: Recipe[], items: Item[], limit = 3): Synergy[
     .slice(0, limit)
 }
 
+// Plural and definite endings (Norwegian and English): "pølse" -> "pølser", "egg" -> "eggene".
+const ENDINGS = ['', 's', 'es', 'e', 'r', 'er', 'n', 'en', 'et', 'ne', 'ene', 'a']
+
 /**
- * Offer word `o` is item word `w`, a plural of it, or a compound ending in it ("lettmelk" ~ "melk",
- * "grillpølser" ~ "pølse"). Stricter than wordMatch: "kylling" does not match "kyllingkrydder".
+ * Offer word `o` is item word `w` with an ending, or a compound ending in it ("lettmelk" ~ "melk",
+ * "grillpølser" ~ "pølse"). Only real endings: "pepper" does not match "pepperoni", "mel" not
+ * "melk", "kylling" not "kyllingkrydder".
  */
 function offerWordMatch(w: string, o: string) {
   if (w === o) return true
   if (w.length < 3) return false
-  for (let cut = 0; cut <= 3; cut++) {
-    const base = cut ? o.slice(0, -cut) : o
-    if (base.length < w.length) break
-    if (base === w || (w.length >= 4 && base.endsWith(w))) return true
+  for (const end of ENDINGS) {
+    if (o === w + end || (w.length >= 4 && o.endsWith(w + end))) return true
+    // Item in plural, offer in singular: "tomater" ~ "tomat".
+    if (end && o.length >= 4 && w === o + end) return true
   }
-  // Item in plural, offer in singular: "tomater" ~ "tomat".
-  return o.length >= 4 && w.startsWith(o) && w.length - o.length <= 3
+  return false
 }
 
 export type OfferIndex = { offer: Offer; words: string[] }[]
