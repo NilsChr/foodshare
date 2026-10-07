@@ -1,11 +1,11 @@
-import { Check, ChevronLeft, Plus, Search, Store, Tag } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Check, ChevronLeft, Plus, Search, SlidersHorizontal, Store, Tag } from 'lucide-react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
-import { ChainLogo, OfferRow, OffersNote } from '../components/offers'
+import { ChainLogo, OfferRow, OfferSorts, OffersNote, useOfferSort } from '../components/offers'
 import { Button, Empty, ErrorText, IconButton, Input, PageHeader } from '../components/ui'
 import { useMe } from '../lib/auth'
 import { OFFER_CATEGORIES, offerCategoryIcon, offerCategoryName, sectionForOffer } from '../lib/categories'
-import { categorize, indexOffers, normalize, offersFor, proper } from '../lib/match'
+import { categorize, indexOffers, normalize, proper, searchOffers } from '../lib/match'
 import { col, errorMessage, type Offer } from '../lib/pb'
 import { useSpace } from '../lib/space'
 import { t } from '../lib/i18n'
@@ -18,6 +18,25 @@ function itemName(offer: Offer) {
   return proper(heading === heading.toUpperCase() ? heading.toLowerCase() : heading)
 }
 
+/**
+ * One filter row that drops in from above when `open`, or folds back up. `index` of `count`
+ * staggers the rows: they open top first and close bottom first. A closed row is inert.
+ */
+function Drop({ open, index, count, children }: { open: boolean; index: number; count: number; children: ReactNode }) {
+  const transitionDelay = `${(open ? index : count - 1 - index) * 70}ms`
+  return (
+    <div inert={!open} style={{ gridTemplateRows: open ? '1fr' : '0fr', transitionDelay }}
+      className="-mx-4 grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none">
+      <div className="min-h-0 overflow-hidden">
+        <div style={{ transitionDelay }}
+          className={`pt-2 transition duration-300 ease-out motion-reduce:transition-none ${open ? 'translate-y-0 opacity-100' : '-translate-y-3 opacity-0'}`}>
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /** This week's offers from the group's stores: search, filter by store, add to the list. */
 export default function OffersPage() {
   const me = useMe()
@@ -27,8 +46,12 @@ export default function OffersPage() {
   // Opened straight from a link or reload there is no page to go back to; go to the list.
   const back = <IconButton icon={ChevronLeft} label={t('Back')} onClick={() => (location.key === 'default' ? navigate('/list') : navigate(-1))} className="-ml-2 text-ink" />
   const [query, setQuery] = useState('')
-  const [chain, setChain] = useState('')
+  // Chosen stores; none means all of them.
+  const [picked, setPicked] = useState<string[]>([])
   const [category, setCategory] = useState('')
+  const sorting = useOfferSort()
+  // Filter rows stay folded away until asked for; the filters apply either way.
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [shown, setShown] = useState(PAGE)
   const [error, setError] = useState('')
 
@@ -40,15 +63,24 @@ export default function OffersPage() {
   const list = useMemo(() => {
     // Search: closest headings first. Browsing: biggest discounts first.
     const found = query.trim()
-      ? offersFor(query, index).offers
+      ? searchOffers(query, index)
       : [...offers].sort((a, b) => b.discount_pct - a.discount_pct || a.heading.localeCompare(b.heading))
-    return chain ? found.filter((o) => o.chain === chain) : found
-  }, [query, index, offers, chain])
+    return picked.length ? found.filter((o) => picked.includes(o.chain)) : found
+  }, [query, index, offers, picked])
   // Categories present in what the search and store filter left, in store-walk order.
   const present = useMemo(() => OFFER_CATEGORIES.filter((c) => list.some((o) => o.category === c)), [list])
   // A category the other filters left empty is ignored rather than showing nothing.
   const active = present.includes(category) ? category : ''
-  const shownList = active ? list.filter((o) => o.category === active) : list
+  const rows = present.length > 1 ? 3 : 2
+  const filters = (picked.length ? 1 : 0) + (sorting.sort !== 'match' ? 1 : 0) + (active ? 1 : 0)
+  const shownList = sorting.apply(active ? list.filter((o) => o.category === active) : list)
+
+  /** Tap a store to add it to or take it out of the filter. Every store picked is the same as all. */
+  function toggle(id: string) {
+    const next = picked.includes(id) ? picked.filter((p) => p !== id) : [...picked, id]
+    setPicked(next.length === stores.length ? [] : next)
+    setShown(PAGE)
+  }
 
   async function add(offer: Offer) {
     const name = itemName(offer)
@@ -85,36 +117,53 @@ export default function OffersPage() {
     <>
       <PageHeader title={t('Offers')} back={back} />
       <main className="mx-auto max-w-2xl space-y-3 px-4">
-        <div className="sticky top-[calc(4rem+env(safe-area-inset-top))] z-10 -mx-4 space-y-2 bg-bg/85 px-4 pb-2 backdrop-blur-md">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3.5 top-3 size-5 text-muted" />
-            <Input value={query} onChange={(e) => { setQuery(e.target.value); setShown(PAGE) }} placeholder={t('Search offers, e.g. kylling')}
-              className="pl-11" type="search" enterKeyHint="search" aria-label={t('Search offers')} />
-          </div>
-          <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none]">
-            <button onClick={() => { setChain(''); setShown(PAGE) }}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-bold transition ${!chain ? 'bg-brand text-brand-ink' : 'bg-soft'}`}>
-              {t('All stores')}
-            </button>
-            {stores.map((c) => (
-              <button key={c.id} onClick={() => { setChain(c.id); setShown(PAGE) }} aria-pressed={chain === c.id} aria-label={c.name}
-                className={`shrink-0 rounded-full p-1 transition ${chain === c.id ? 'bg-brand' : 'bg-soft'}`}>
-                <ChainLogo chain={c} className="h-6 w-16" />
-              </button>
-            ))}
-          </div>
-          {present.length > 1 && (
-            <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none]">
-              {['', ...present].map((c) => {
-                const Icon = c ? offerCategoryIcon(c) : Tag
-                return (
-                  <button key={c || 'all'} onClick={() => { setCategory(c); setShown(PAGE) }} aria-pressed={active === c}
-                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold transition ${active === c ? 'bg-brand text-brand-ink' : 'bg-soft'}`}>
-                    <Icon className="size-4" /> {c ? offerCategoryName(c) : t('All')}
-                  </button>
-                )
-              })}
+        <div className="sticky top-[calc(4rem+env(safe-area-inset-top))] z-10 -mx-4 bg-bg/85 px-4 pb-2 backdrop-blur-md">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3.5 top-3 size-5 text-muted" />
+              <Input value={query} onChange={(e) => { setQuery(e.target.value); setShown(PAGE) }} placeholder={t('Search offers, e.g. kylling')}
+                className="pl-11" type="search" enterKeyHint="search" aria-label={t('Search offers')} />
             </div>
+            <button onClick={() => setFiltersOpen(!filtersOpen)} aria-expanded={filtersOpen}
+              aria-label={filters ? t('Filters ({n} on)', { n: filters }) : t('Filters')} title={t('Filters')}
+              className={`relative flex size-11 shrink-0 items-center justify-center rounded-2xl transition active:scale-95 ${filtersOpen ? 'bg-brand text-brand-ink' : 'bg-card ring-1 ring-line'}`}>
+              <SlidersHorizontal className="size-5" strokeWidth={2.25} />
+              {filters > 0 && !filtersOpen && (
+                <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-brand text-xs font-extrabold text-brand-ink">{filters}</span>
+              )}
+            </button>
+          </div>
+          <Drop open={filtersOpen} index={0} count={rows}>
+            <div className="flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none]">
+              <button onClick={() => { setPicked([]); setShown(PAGE) }} aria-pressed={!picked.length}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-bold transition ${!picked.length ? 'bg-brand text-brand-ink' : 'bg-soft'}`}>
+                {t('All stores')}
+              </button>
+              {stores.map((c) => (
+                <button key={c.id} onClick={() => toggle(c.id)} aria-pressed={picked.includes(c.id)} aria-label={c.name}
+                  className={`shrink-0 rounded-full p-1 transition ${picked.includes(c.id) ? 'bg-brand' : 'bg-soft'}`}>
+                  <ChainLogo chain={c} className="h-6 w-16" />
+                </button>
+              ))}
+            </div>
+          </Drop>
+          <Drop open={filtersOpen} index={1} count={rows}>
+            <OfferSorts {...sorting} pick={(k) => { sorting.pick(k); setShown(PAGE) }} matchLabel={query.trim() ? 'Best match' : 'Biggest discount'} className="px-4" />
+          </Drop>
+          {present.length > 1 && (
+            <Drop open={filtersOpen} index={2} count={rows}>
+              <div className="flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none]">
+                {['', ...present].map((c) => {
+                  const Icon = c ? offerCategoryIcon(c) : Tag
+                  return (
+                    <button key={c || 'all'} onClick={() => { setCategory(c); setShown(PAGE) }} aria-pressed={active === c}
+                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold transition ${active === c ? 'bg-brand text-brand-ink' : 'bg-soft'}`}>
+                      <Icon className="size-4" /> {c ? offerCategoryName(c) : t('All')}
+                    </button>
+                  )
+                })}
+              </div>
+            </Drop>
           )}
         </div>
         <ErrorText error={error} />

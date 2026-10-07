@@ -232,6 +232,22 @@ export function offersFor(name: string, index: OfferIndex, productType = '', con
   }
 }
 
+/**
+ * Offers for a typed search. Looser than offersFor: a search word can be any part of an offer
+ * word, so "kylling" finds "KYLLINGFILET" and a half-typed "kyl" already shows it. Offers the
+ * list would match ("kylling" ~ "GRILLKYLLING") come first, then closest heading, then cheapest.
+ */
+export function searchOffers(query: string, index: OfferIndex) {
+  const words = tokens(query)
+  if (!words.length) return []
+  const exact = (e: OfferIndex[number]) => words.every((w) => e.words.some((o) => offerWordMatch(w, o)))
+  return index
+    .filter((e) => words.every((w) => e.words.some((o) => o.includes(w))))
+    .map((e) => ({ e, rank: exact(e) ? 0 : 1 }))
+    .sort((a, b) => a.rank - b.rank || a.e.words.length - b.e.words.length || a.e.offer.price - b.e.offer.price)
+    .map(({ e }) => e.offer)
+}
+
 const UNIT = '(?:x|stk|pcs|pk|g|kg|l|dl|ml|cl)'
 
 /** "2 milk", "milk 2l", "500 g mince" -> name + quantity. */

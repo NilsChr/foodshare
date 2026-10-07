@@ -81,6 +81,47 @@ const SORTS = {
   unit: { label: 'Price per kg/l', sort: byUnitPrice, directed: true },
 }
 
+type SortKey = keyof typeof SORTS
+
+/**
+ * Offer sort state. The first sort keeps the order the offers come in; tapping the active price
+ * sort flips its direction, picking another sort starts low to high.
+ */
+export function useOfferSort() {
+  const [sort, setSort] = useState<SortKey>('match')
+  const [desc, setDesc] = useState(false)
+  const pick = (k: SortKey) => {
+    if (k === sort) setDesc(SORTS[k].directed && !desc)
+    else {
+      setSort(k)
+      setDesc(false)
+    }
+  }
+  return { sort, desc, pick, apply: (offers: Offer[]) => SORTS[sort].sort(offers, desc) }
+}
+
+/** Sort chips for useOfferSort. `matchLabel` names the incoming order (default "Best match"). */
+export function OfferSorts({ sort, desc, pick, matchLabel = 'Best match', className = '' }: ReturnType<typeof useOfferSort> & {
+  matchLabel?: string; className?: string
+}) {
+  const Arrow = desc ? ArrowDown : ArrowUp
+  return (
+    <div className={`flex gap-1.5 overflow-x-auto [scrollbar-width:none] ${className}`}>
+      {(Object.keys(SORTS) as SortKey[]).map((k) => {
+        const label = t(k === 'match' ? matchLabel : SORTS[k].label)
+        return (
+          <button key={k} onClick={() => pick(k)} aria-pressed={sort === k}
+            aria-label={sort === k && SORTS[k].directed ? `${label}, ${t(desc ? 'high to low' : 'low to high')}` : undefined}
+            className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-sm font-bold transition ${sort === k ? 'bg-brand text-brand-ink' : 'bg-soft'}`}>
+            {label}
+            {sort === k && SORTS[k].directed && <Arrow className="size-4" strokeWidth={2.5} />}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 /**
  * This week's offers matching a list item, closest match first unless sorted by price.
  * `similar` (same product type, not confirmed as the item) sits collapsed below them.
@@ -88,37 +129,16 @@ const SORTS = {
 export function OffersSheet({ name, offers, similar = [], chains, onClose }: {
   name: string; offers: Offer[]; similar?: Offer[]; chains: Chain[]; onClose: () => void
 }) {
-  const [sort, setSort] = useState<keyof typeof SORTS>('match')
-  const [desc, setDesc] = useState(false)
+  const sorting = useOfferSort()
   const [showSimilar, setShowSimilar] = useState(false)
   // With nothing confirmed, the similar offers are all there is: show them open.
   const similarOpen = showSimilar || !offers.length
-  // Tapping the active price sort flips its direction; picking another sort starts low to high.
-  const pick = (k: keyof typeof SORTS) => {
-    if (k === sort) setDesc(SORTS[k].directed && !desc)
-    else {
-      setSort(k)
-      setDesc(false)
-    }
-  }
-  const Arrow = desc ? ArrowDown : ArrowUp
   const byId = new Map(chains.map((c) => [c.id, c]))
   return (
     <Sheet open={!!name} onClose={onClose} title={t('Offers: {name}', { name })}>
-      {offers.length > 1 && (
-        <div className="flex gap-1.5 overflow-x-auto [scrollbar-width:none]">
-          {(Object.keys(SORTS) as (keyof typeof SORTS)[]).map((k) => (
-            <button key={k} onClick={() => pick(k)} aria-pressed={sort === k}
-              aria-label={sort === k && SORTS[k].directed ? `${t(SORTS[k].label)}, ${t(desc ? 'high to low' : 'low to high')}` : undefined}
-              className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-sm font-bold transition ${sort === k ? 'bg-brand text-brand-ink' : 'bg-soft'}`}>
-              {t(SORTS[k].label)}
-              {sort === k && SORTS[k].directed && <Arrow className="size-4" strokeWidth={2.5} />}
-            </button>
-          ))}
-        </div>
-      )}
+      {offers.length > 1 && <OfferSorts {...sorting} />}
       <ul className="divide-y divide-line">
-        {SORTS[sort].sort(offers, desc).map((o) => <OfferRow key={o.id} offer={o} chain={byId.get(o.chain)} />)}
+        {sorting.apply(offers).map((o) => <OfferRow key={o.id} offer={o} chain={byId.get(o.chain)} />)}
       </ul>
       {similar.length > 0 && (
         <>
@@ -129,7 +149,7 @@ export function OffersSheet({ name, offers, similar = [], chains, onClose }: {
           </button>
           {similarOpen && (
             <ul className="divide-y divide-line">
-              {SORTS[sort].sort(similar, desc).map((o) => <OfferRow key={o.id} offer={o} chain={byId.get(o.chain)} />)}
+              {sorting.apply(similar).map((o) => <OfferRow key={o.id} offer={o} chain={byId.get(o.chain)} />)}
             </ul>
           )}
         </>
