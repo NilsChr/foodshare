@@ -1,5 +1,5 @@
 import {
-  ArrowUpDown, BookOpen, Check, ChevronDown, ChevronRight, Layers, List, Pencil, Plus, ShoppingBasket, Sparkles, Store, Tag, Trash2,
+  ArrowUpDown, BookOpen, Check, ChevronDown, ChevronRight, Layers, List, Pencil, Plus, Refrigerator, ShoppingBasket, Sparkles, Store, Tag, Trash2,
 } from 'lucide-react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
@@ -35,12 +35,14 @@ function readGrouped() {
 export default function ListPage() {
   const me = useMe()
   const navigate = useNavigate()
-  const { space, items, recipes, categories, chains, offers, loading, patchItem, removeItem } = useSpace()
+  const { space, items, recipes, categories, chains, offers, pantry, loading, patchItem, removeItem, patchPantry } = useSpace()
   const [text, setText] = useState('')
   const [grouped, setGrouped] = useState(readGrouped)
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [ordering, setOrdering] = useState(false)
   const [showChecked, setShowChecked] = useState(false)
+  const [clearing, setClearing] = useState(false)
+  const [moving, setMoving] = useState(false)
   const [editing, setEditing] = useState<Item | null>(null)
   const [offersOf, setOffersOf] = useState<Item | null>(null)
   const [error, setError] = useState('')
@@ -168,10 +170,34 @@ export default function ListPage() {
     }
   }
 
-  async function remove(list: Item[], question: string) {
-    if (!confirm(question)) return
+  async function removeAll(list: Item[]) {
     list.forEach((i) => removeItem(i.id))
     await Promise.all(list.map((i) => col.items().delete(i.id).catch(() => {})))
+  }
+
+  async function remove(list: Item[], question: string) {
+    if (confirm(question)) await removeAll(list)
+  }
+
+  // Bought things go to "At home" so planned dinners still count them once the basket is cleared.
+  async function moveHome() {
+    setMoving(true)
+    setError('')
+    const names = new Map<string, string>()
+    for (const i of checked) {
+      const key = normalize(i.name)
+      if (!pantry.some((p) => normalize(p.name) === key)) names.set(key, i.name)
+    }
+    try {
+      const created = await Promise.all([...names.values()].map((name) => col.pantry().create({ space: space.id, name, added_by: me.id })))
+      created.forEach(patchPantry)
+      await removeAll(checked)
+      setClearing(false)
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setMoving(false)
+    }
   }
 
   function setGroupedPersist(on: boolean) {
@@ -266,7 +292,7 @@ export default function ListPage() {
                     <ChevronDown className={`size-3.5 transition ${showChecked ? '' : '-rotate-90'}`} />
                     {t('In the basket ({n})', { n: checked.length })}
                   </button>
-                  <button onClick={() => remove(checked, tn(checked.length, 'Remove {n} crossed-off item?', 'Remove {n} crossed-off items?'))} className="flex items-center gap-1 text-sm font-bold text-muted hover:text-danger">
+                  <button onClick={() => setClearing(true)} className="flex items-center gap-1 text-sm font-bold text-muted hover:text-danger">
                     <Trash2 className="size-4" /> {t('Clear')}
                   </button>
                 </div>
@@ -290,6 +316,21 @@ export default function ListPage() {
       <OffersSheet name={offersOf ? proper(offersOf.name) : ''} offers={offersOf ? itemOffers.map.get(offersOf.id) ?? [] : []}
         similar={offersOf ? itemOffers.similar.get(offersOf.id) ?? [] : []}
         chains={chains} onClose={() => setOffersOf(null)} />
+      <Sheet open={clearing} onClose={() => setClearing(false)} title={t('Clear the basket')}>
+        <div className="space-y-3">
+          <p className="text-sm text-muted">
+            {t('Move what you bought to “At home”, and planned dinners still count it as there.')}
+          </p>
+          <Button icon={Refrigerator} className="w-full" busy={moving} onClick={moveHome}>
+            {tn(checked.length, 'Move {n} item to At home', 'Move {n} items to At home')}
+          </Button>
+          <Button variant="soft" icon={Trash2} className="w-full" disabled={moving}
+            onClick={() => { setClearing(false); removeAll(checked) }}>
+            {t('Just remove them')}
+          </Button>
+          <ErrorText error={error} />
+        </div>
+      </Sheet>
       <Sheet open={ordering} onClose={() => setOrdering(false)} title={t('Order sections')}>
         <p className="mb-3 text-sm text-muted">{t('Drag sections into the order you walk the store. Other is always last.')}</p>
         <SectionOrder categories={categories} />

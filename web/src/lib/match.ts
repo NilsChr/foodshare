@@ -100,8 +100,17 @@ export function categorize(name: string, categories: Category[]): string {
 
 export type IngredientStatus = 'have' | 'home' | 'to-buy' | 'unknown'
 
+// Tap water: always at home, never bought. Only plain water, so "kokosvann" or "sparkling water" still count.
+const WATER = new Set(['vann', 'water', 'kaldt', 'varmt', 'lunkent', 'kokende', 'cold', 'warm', 'hot', 'boiling', 'lukewarm', 'tap'])
+
+function isTapWater(name: string) {
+  const words = tokens(name)
+  return words.some((w) => w === 'vann' || w === 'water') && words.every((w) => WATER.has(w))
+}
+
 /** Status of an ingredient: still on the list, crossed off, in the pantry, or none of these. */
 export function ingredientStatus(name: string, items: Item[], pantry: PantryItem[]): IngredientStatus {
+  if (isTapWater(name)) return 'home'
   const matches = items.filter((i) => namesMatch(name, i.name))
   if (matches.some((i) => !i.checked)) return 'to-buy'
   if (matches.length) return 'have'
@@ -134,6 +143,7 @@ export function pantryMatches(recipes: Recipe[], items: Item[], pantry: PantryIt
       const matched: string[] = []
       const missing: string[] = []
       for (const ing of recipe.ingredients ?? []) {
+        if (isTapWater(ing.name)) continue
         ;(home.some((h) => namesMatch(ing.name, h)) ? matched : missing).push(ing.name)
       }
       return { recipe, matched, missing }
@@ -165,6 +175,7 @@ export function synergies(recipes: Recipe[], items: Item[], limit = 3): Synergy[
       const matched: string[] = []
       const missing: string[] = []
       for (const ing of recipe.ingredients ?? []) {
+        if (isTapWater(ing.name)) continue
         ;(open.some((i) => namesMatch(ing.name, i.name)) ? matched : missing).push(ing.name)
       }
       return { recipe, matched, missing }
