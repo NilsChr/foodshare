@@ -12,6 +12,7 @@
   --brand-ink: #ffffff;
   --brand-soft: #dcfce7;
   --brand-text: #15803d;
+  --chart: #16a34a;
   --warn-soft: #fef3c7;
   --warn-text: #b45309;
   --danger: #dc2626;
@@ -30,6 +31,7 @@
     --brand-ink: #062712;
     --brand-soft: #133a22;
     --brand-text: #4ade80;
+    --chart: #16a34a;
     --warn-soft: #3a2c10;
     --warn-text: #fbbf24;
     --danger: #f87171;
@@ -49,6 +51,7 @@
   --color-brand-ink: var(--brand-ink);
   --color-brand-soft: var(--brand-soft);
   --color-brand-text: var(--brand-text);
+  --color-chart: var(--chart);
   --color-warn-soft: var(--warn-soft);
   --color-warn-text: var(--warn-text);
   --color-danger: var(--danger);

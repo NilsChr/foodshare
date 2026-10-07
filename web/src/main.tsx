@@ -10,6 +10,7 @@ import RecipeEdit from './pages/RecipeEdit'
 import RecipePage from './pages/RecipePage'
 import RecipesPage from './pages/RecipesPage'
 import OffersPage from './pages/OffersPage'
+import SavingsPage from './pages/SavingsPage'
 import SpacePage from './pages/SpacePage'
 import WeekPage from './pages/WeekPage'
 
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
       { path: 'recipes/:id', element: <RecipePage /> },
       { path: 'recipes/:id/edit', element: <RecipeEdit /> },
       { path: 'space', element: <SpacePage /> },
+      { path: 'savings', element: <SavingsPage /> },
       { path: 'offers', element: <OffersPage /> },
       { path: '*', element: <Navigate to="/list" replace /> },
     ],

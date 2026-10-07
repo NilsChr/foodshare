@@ -75,6 +75,8 @@ export interface Item extends RecordModel {
   product_type: string
   /** Offers of that type the server confirmed the name means; null until checked. */
   offer_matches: string[] | null
+  /** The offer a member picked for the item; "" when none, or once the offer has expired. */
+  offer: string
 }
 
 export interface Meal extends RecordModel {
@@ -130,6 +132,17 @@ export interface RecipePrice extends RecordModel {
   created_by: string
 }
 
+/** A picked offer that was bought, copied when the basket was cleared. `pre_price` is 0 when the flyer gave none. */
+export interface Purchase extends RecordModel {
+  space: string
+  name: string
+  heading: string
+  chain: string
+  price: number
+  pre_price: number
+  bought_by: string
+}
+
 export const col = {
   spaces: () => pb.collection<Space>('spaces'),
   memberships: () => pb.collection<Membership>('memberships'),
@@ -143,6 +156,7 @@ export const col = {
   chains: () => pb.collection<Chain>('chains'),
   offers: () => pb.collection<Offer>('offers'),
   recipePrices: () => pb.collection<RecipePrice>('recipe_prices'),
+  purchases: () => pb.collection<Purchase>('purchases'),
 }
 
 export function recipeImage(recipe: Recipe, thumb?: '400x300' | '800x600' | '120x120') {

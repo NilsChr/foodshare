@@ -1,10 +1,10 @@
-import { ArrowDown, ArrowUp, ChevronDown, Tag } from 'lucide-react'
+import { ArrowDown, ArrowUp, Check, ChevronDown, Tag } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { shortDate } from '../lib/dates'
 import { t } from '../lib/i18n'
 import { byUnitPrice, formatPrice, unitPrice } from '../lib/offers'
 import type { Chain, Offer } from '../lib/pb'
-import { Sheet } from './ui'
+import { IconButton, Sheet } from './ui'
 
 /** The chain's logo on a white plate (logos are made for white), or its initial in brand color. */
 export function ChainLogo({ chain, className = 'h-6 w-16' }: { chain?: Chain; className?: string }) {
@@ -198,20 +198,31 @@ export function OfferSorts({ sort, desc, pick, matchLabel = 'Best match', classN
 /**
  * This week's offers matching a list item, closest match first unless sorted by price.
  * `similar` (same product type, not confirmed as the item) sits collapsed below them.
+ * With `onChoose`, each offer can be picked for the item (`chosen`), or unpicked with null.
  */
-export function OffersSheet({ name, offers, similar = [], chains, onClose }: {
-  name: string; offers: Offer[]; similar?: Offer[]; chains: Chain[]; onClose: () => void
+export function OffersSheet({ name, offers, similar = [], chains, chosen = '', onChoose, onClose }: {
+  name: string; offers: Offer[]; similar?: Offer[]; chains: Chain[]
+  chosen?: string; onChoose?: (offer: Offer | null) => void; onClose: () => void
 }) {
   const sorting = useOfferSort()
   const [showSimilar, setShowSimilar] = useState(false)
   // With nothing confirmed, the similar offers are all there is: show them open.
   const similarOpen = showSimilar || !offers.length
   const byId = new Map(chains.map((c) => [c.id, c]))
+  const row = (o: Offer) => (
+    <OfferRow key={o.id} offer={o} chain={byId.get(o.chain)} action={onChoose && (
+      <IconButton icon={Check} active={o.id === chosen} aria-pressed={o.id === chosen}
+        label={o.id === chosen ? t('Chosen, tap to undo') : t('Choose {name}', { name: o.heading })}
+        onClick={() => onChoose(o.id === chosen ? null : o)}
+        className={`-mr-2 ${o.id === chosen ? 'bg-brand text-brand-ink hover:bg-brand' : 'bg-soft'}`} />
+    )} />
+  )
   return (
     <Sheet open={!!name} onClose={onClose} title={t('Offers: {name}', { name })}>
+      {onChoose && <p className="pb-2 text-sm text-muted">{t('Choose the one you want to buy.')}</p>}
       {offers.length > 1 && <OfferSorts {...sorting} />}
       <ul className="divide-y divide-line">
-        {sorting.apply(offers).map((o) => <OfferRow key={o.id} offer={o} chain={byId.get(o.chain)} />)}
+        {sorting.apply(offers).map(row)}
       </ul>
       {similar.length > 0 && (
         <>
@@ -222,7 +233,7 @@ export function OffersSheet({ name, offers, similar = [], chains, onClose }: {
           </button>
           {similarOpen && (
             <ul className="divide-y divide-line">
-              {sorting.apply(similar).map((o) => <OfferRow key={o.id} offer={o} chain={byId.get(o.chain)} />)}
+              {sorting.apply(similar).map(row)}
             </ul>
           )}
         </>

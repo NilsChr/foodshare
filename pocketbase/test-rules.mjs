@@ -127,9 +127,32 @@ check("recipe price cannot be edited",
   (await call(alice.token, "PATCH", `/api/collections/recipe_prices/records/${price.id}`, { total: 1 })).status, 403);
 check("eve deletes her space", (await call(eve.token, "DELETE", `/api/collections/spaces/records/${eveSpace.id}`)).status, 204);
 
+// A picked offer: members set it; the offers sync deleting the offer clears it from the item.
+const offer = (await call(admin, "POST", "/api/collections/offers/records", { key: "rules-test", chain: chains.items[0].id, heading: "Test offer" })).body;
+check("bob picks an offer for the item",
+  (await call(bob.token, "PATCH", `/api/collections/items/records/${item.id}`, { offer: offer.id })).body.offer, offer.id);
+await call(admin, "DELETE", `/api/collections/offers/records/${offer.id}`);
+const kept = (await call(alice.token, "GET", `/api/collections/items/records/${item.id}`)).body;
+check("expired offer cleared from item", kept.offer, "");
+
+// Purchases: members record their own; nobody edits or deletes them.
+const purchase = (await call(bob.token, "POST", "/api/collections/purchases/records", {
+  space: space.id, name: "kyllingfilet", heading: "KYLLINGFILET", chain: chains.items[0].id, price: 67.9, pre_price: 89.9, bought_by: bob.id,
+})).body;
+check("member records a purchase", !!purchase.id, true);
+check("purchase as someone else rejected",
+  (await call(bob.token, "POST", "/api/collections/purchases/records", { space: space.id, name: "x", bought_by: alice.id })).status, 400);
+check("eve cannot record a purchase in the group",
+  (await call(eve.token, "POST", "/api/collections/purchases/records", { space: space.id, name: "x", bought_by: eve.id })).status, 400);
+check("eve cannot view purchase", (await call(eve.token, "GET", `/api/collections/purchases/records/${purchase.id}`)).status, 404);
+check("purchase cannot be edited",
+  (await call(alice.token, "PATCH", `/api/collections/purchases/records/${purchase.id}`, { pre_price: 1000 })).status, 403);
+check("purchase cannot be deleted", (await call(alice.token, "DELETE", `/api/collections/purchases/records/${purchase.id}`)).status, 403);
+
 check("alice deletes space",(await call(alice.token, "DELETE", `/api/collections/spaces/records/${space.id}`)).status, 204);
 check("item cascade-deleted", (await call(admin, "GET", `/api/collections/items/records/${item.id}`)).status, 404);
 check("recipe price cascade-deleted", (await call(admin, "GET", `/api/collections/recipe_prices/records/${price.id}`)).status, 404);
+check("purchase cascade-deleted", (await call(admin, "GET", `/api/collections/purchases/records/${purchase.id}`)).status, 404);
 check("pantry cascade-deleted",(await call(admin, "GET", `/api/collections/pantry/records/${stock.id}`)).status, 404);
 
 console.log(failed ? `${failed} failed` : "all passed");

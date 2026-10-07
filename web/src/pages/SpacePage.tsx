@@ -1,17 +1,18 @@
 import {
-  Check, ChevronRight, Newspaper, Languages, Link2, Crown, LogOut, Pencil, Plus, Send, Trash2, UserMinus, X,
+  Check, ChevronRight, Newspaper, PiggyBank, Languages, Link2, Crown, LogOut, Pencil, Plus, Send, Trash2, UserMinus, X,
 } from 'lucide-react'
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import Invites from '../components/Invites'
 import { ChainLogo } from '../components/offers'
 import SectionOrder from '../components/SectionOrder'
-import { Avatar, Button, ErrorText, Field, IconButton, Input, PageHeader, Sheet } from '../components/ui'
+import { Avatar, Button, RollingNumber, ErrorText, Field, IconButton, Input, PageHeader, Sheet } from '../components/ui'
 import { useMe } from '../lib/auth'
 import { CATEGORY_ICONS, categoryIcon, categoryName, groupMembers } from '../lib/categories'
 import { col, displayName, errorMessage, pb, type Category, type Chain, type Invite } from '../lib/pb'
 import { useSpace, useSpaces } from '../lib/space'
-import { lang, setLang, t, tn } from '../lib/i18n'
+import { lang, locale, setLang, t, tn } from '../lib/i18n'
+import { formatPrice, saving } from '../lib/offers'
 
 function Section({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
   return (
@@ -55,6 +56,7 @@ export default function SpacePage() {
       <main className="mx-auto max-w-2xl space-y-7 px-4 pb-6">
         <Invites />
         <ErrorText error={error} />
+        <Savings />
 
         <Section title={t('Members')}>
           <div className={card}>
@@ -447,6 +449,39 @@ function CategorySheet({ category, onClose, spaceId, nextSort }: {
         <ErrorText error={error} />
       </form>
     </Sheet>
+  )
+}
+
+/** "312 kr saved on offers since 7 October 2026", from the group's bought offers. Hidden until something was saved. */
+function Savings() {
+  const { space } = useSpace()
+  const [summary, setSummary] = useState<{ saved: number; since: Date; space: string } | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    col.purchases().getFullList({ filter: pb.filter('space = {:id}', { id: space.id }), sort: 'created', fields: 'price,pre_price,created' })
+      .then((list) => alive && list.length > 0 && setSummary({
+        saved: list.reduce((sum, p) => sum + saving(p), 0), since: new Date(list[0].created.replace(' ', 'T')), space: space.id,
+      }))
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [space.id])
+
+  // Ignore a summary left from the group shown before.
+  if (!summary || summary.space !== space.id || summary.saved <= 0) return null
+  return (
+    <Link to="/savings" className="flex items-center gap-3 rounded-3xl bg-brand-soft px-4 py-3 active:scale-[0.99]">
+      <PiggyBank className="size-7 shrink-0 text-brand-text" />
+      <p className="min-w-0 flex-1">
+        <b className="block text-lg font-extrabold tabular-nums text-brand-text"><RollingNumber text={formatPrice(summary.saved, true)} /></b>
+        <span className="block text-sm">
+          {t('saved on offers since {date}', { date: summary.since.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) })}
+        </span>
+      </p>
+      <ChevronRight className="size-5 shrink-0 text-brand-text" />
+    </Link>
   )
 }
 

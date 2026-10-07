@@ -1,5 +1,5 @@
 import { LoaderCircle, X, type LucideIcon } from 'lucide-react'
-import { useEffect, useRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react'
 import { avatarUrl, displayName, type User } from '../lib/pb'
 import { t } from '../lib/i18n'
 
@@ -161,4 +161,42 @@ export function Spinner() {
 
 export function ErrorText({ error }: { error: string }) {
   return error ? <p className="rounded-xl bg-danger/10 px-3 py-2 text-sm font-semibold text-danger">{error}</p> : null
+}
+
+// Each digit rolls up from 0 through this many extra turns, most on the right, like an odometer.
+const EXTRA_TURNS = [2, 1]
+
+/**
+ * `text` ("312 kr") with its digits rolling up from 0 into place when shown, like an odometer.
+ * Other characters stay put. Screen readers get the plain text; reduced motion shows it at once.
+ */
+export function RollingNumber({ text }: { text: string }) {
+  const [rolled, setRolled] = useState(false)
+  useEffect(() => {
+    // Start from 0 for one frame, then roll to the value.
+    const frame = requestAnimationFrame(() => setRolled(true))
+    return () => cancelAnimationFrame(frame)
+  }, [])
+  const chars = [...text]
+  const digits = chars.filter((c) => /\d/.test(c)).length
+  let seen = 0
+  return (
+    <span className="inline-flex leading-[1.2em] tabular-nums">
+      <span className="sr-only">{text}</span>
+      {chars.map((c, i) => {
+        if (!/\d/.test(c)) return <span key={i} aria-hidden className="whitespace-pre">{c}</span>
+        const fromRight = digits - ++seen
+        const turns = EXTRA_TURNS[fromRight] ?? 0
+        const stop = rolled ? turns * 10 + Number(c) : 0
+        return (
+          <span key={i} aria-hidden className="inline-block h-[1.2em] overflow-hidden">
+            <span className="flex flex-col transition-transform duration-[1400ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] motion-reduce:duration-0"
+              style={{ transform: `translateY(${-stop * 1.2}em)`, transitionDelay: `${fromRight * 60}ms` }}>
+              {Array.from({ length: turns * 10 + 10 }, (_, n) => <span key={n}>{n % 10}</span>)}
+            </span>
+          </span>
+        )
+      })}
+    </span>
+  )
 }

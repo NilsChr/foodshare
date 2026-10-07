@@ -1,10 +1,10 @@
 import {
-  ArrowUpDown, BookOpen, Check, ChevronDown, ChevronRight, Layers, List, Pencil, Plus, Refrigerator, ShoppingBasket, Sparkles, Store, Tag, Trash2,
+  ArrowUpDown, BookOpen, CircleAlert, Check, ChevronDown, ChevronRight, Layers, List, Pencil, Plus, Refrigerator, ShoppingBasket, Sparkles, Store, Tag, Trash2,
 } from 'lucide-react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { ChainLogo, OfferBadge, OffersSheet } from '../components/offers'
-import { formatPrice, saving } from '../lib/offers'
+import { formatPrice, offerSize, saving, shortfall } from '../lib/offers'
 import SectionOrder from '../components/SectionOrder'
 import { Button, Empty, ErrorText, Field, IconButton, Input, PageHeader, Sheet, Spinner } from '../components/ui'
 import { useMe } from '../lib/auth'
@@ -67,14 +67,18 @@ export default function ListPage() {
     }
     return { map, similar }
   }, [offers, open])
+  const offerById = useMemo(() => new Map(offers.map((o) => [o.id, o])), [offers])
+  const chainById = useMemo(() => new Map(chains.map((c) => [c.id, c])), [chains])
   // The chosen store with offers on the most open items (needs 2+ stores and 2+ items to be worth saying).
   const storeTip = useMemo(() => {
     if ((space.chains?.length ?? 0) < 2) return null
     const byChain = new Map<string, { items: Item[]; discount: number; saved: number; savedItems: number }>()
     for (const i of open) {
-      // Per store, the offer the item would most likely be bought as: the closest match (offersFor's order).
+      // Per store, the offer the item would most likely be bought as: the one picked for it,
+      // else the closest match (offersFor's order).
+      const picked = offerById.get(i.offer)
       const first = new Map<string, Offer>()
-      for (const o of itemOffers.map.get(i.id) ?? []) if (!first.has(o.chain)) first.set(o.chain, o)
+      for (const o of picked ? [picked] : itemOffers.map.get(i.id) ?? []) if (!first.has(o.chain)) first.set(o.chain, o)
       for (const [chain, o] of first) {
         const e = byChain.get(chain) ?? { items: [], discount: 0, saved: 0, savedItems: 0 }
         byChain.set(chain, {
@@ -88,7 +92,9 @@ export default function ListPage() {
       .filter((r) => r.chain)
       .sort((a, b) => b.items.length - a.items.length || b.discount - a.discount)
     return ranked[0]?.items.length >= 2 ? ranked : null
-  }, [space.chains, open, itemOffers, chains])
+  }, [space.chains, open, itemOffers, offerById, chains])
+  // The offers picked for items on this trip, crossed off or not.
+  const picked = useMemo(() => items.flatMap((i) => offerById.get(i.offer) ?? []), [items, offerById])
   const recipeTitles = useMemo(() => new Map(recipes.map((r) => [r.id, r.title])), [recipes])
 
   // Names to autocomplete: things bought before and recipe ingredients.
@@ -170,6 +176,19 @@ export default function ListPage() {
     }
   }
 
+  // Picking an offer closes the sheet; unpicking keeps it open to pick another.
+  async function choose(item: Item, offer: Offer | null) {
+    if (offer) setOffersOf(null)
+    else setOffersOf({ ...item, offer: '' })
+    patchItem({ ...item, offer: offer?.id ?? '' })
+    try {
+      await col.items().update(item.id, { offer: offer?.id ?? '' })
+    } catch (err) {
+      patchItem(item)
+      setError(errorMessage(err))
+    }
+  }
+
   async function removeAll(list: Item[]) {
     list.forEach((i) => removeItem(i.id))
     await Promise.all(list.map((i) => col.items().delete(i.id).catch(() => {})))
@@ -177,6 +196,30 @@ export default function ListPage() {
 
   async function remove(list: Item[], question: string) {
     if (confirm(question)) await removeAll(list)
+  }
+
+  // Picked offers in the basket are kept as purchases (for "saved on offers") when it is cleared.
+  async function recordPurchases() {
+    await Promise.all(checked.flatMap((i) => {
+      const o = offerById.get(i.offer)
+      return o ? [col.purchases().create({
+        space: space.id, name: i.name, heading: o.heading, chain: o.chain, price: o.price, pre_price: o.pre_price, bought_by: me.id,
+      })] : []
+    }))
+  }
+
+  async function clearBasket() {
+    setMoving(true)
+    setError('')
+    try {
+      await recordPurchases()
+      await removeAll(checked)
+      setClearing(false)
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setMoving(false)
+    }
   }
 
   // Bought things go to "At home" so planned dinners still count them once the basket is cleared.
@@ -191,6 +234,7 @@ export default function ListPage() {
     try {
       const created = await Promise.all([...names.values()].map((name) => col.pantry().create({ space: space.id, name, added_by: me.id })))
       created.forEach(patchPantry)
+      await recordPurchases()
       await removeAll(checked)
       setClearing(false)
     } catch (err) {
@@ -240,6 +284,7 @@ export default function ListPage() {
         {loading ? <Spinner /> : (
           <>
             {storeTip && <StoreTip ranked={storeTip} total={open.length} />}
+            {picked.length > 0 && <PickedTotal offers={picked} />}
             {suggestions.length > 0 && <Synergies suggestions={suggestions} />}
 
             {!open.length && !checked.length && (
@@ -277,6 +322,7 @@ export default function ListPage() {
                     <ul className="divide-y divide-line overflow-hidden rounded-2xl bg-card ring-1 ring-line">
                       {g.items.map((i) => (
                         <ItemRow key={i.id} item={i} recipeTitle={recipeTitles.get(i.recipe)} onToggle={toggle} onEdit={setEditing}
+                          chosen={offerById.get(i.offer)} chains={chainById}
                           offerCount={itemOffers.map.get(i.id)?.length} similarCount={itemOffers.similar.get(i.id)?.length} onOffers={setOffersOf} />
                       ))}
                     </ul>
@@ -300,7 +346,8 @@ export default function ListPage() {
                   <>
                     <ul className="divide-y divide-line overflow-hidden rounded-2xl bg-card ring-1 ring-line">
                       {checked.map((i) => (
-                        <ItemRow key={i.id} item={i} recipeTitle={recipeTitles.get(i.recipe)} onToggle={toggle} onEdit={setEditing} />
+                        <ItemRow key={i.id} item={i} recipeTitle={recipeTitles.get(i.recipe)} onToggle={toggle} onEdit={setEditing}
+                          chosen={offerById.get(i.offer)} chains={chainById} />
                       ))}
                     </ul>
                     <p className="px-1 text-xs text-muted">{t('Crossed-off items count as “at home” for your recipes until you clear them.')}</p>
@@ -315,7 +362,7 @@ export default function ListPage() {
       <ItemSheet item={editing} onClose={() => setEditing(null)} />
       <OffersSheet name={offersOf ? proper(offersOf.name) : ''} offers={offersOf ? itemOffers.map.get(offersOf.id) ?? [] : []}
         similar={offersOf ? itemOffers.similar.get(offersOf.id) ?? [] : []}
-        chains={chains} onClose={() => setOffersOf(null)} />
+        chains={chains} chosen={offersOf?.offer} onChoose={(o) => offersOf && choose(offersOf, o)} onClose={() => setOffersOf(null)} />
       <Sheet open={clearing} onClose={() => setClearing(false)} title={t('Clear the basket')}>
         <div className="space-y-3">
           <p className="text-sm text-muted">
@@ -325,7 +372,7 @@ export default function ListPage() {
             {tn(checked.length, 'Move {n} item to At home', 'Move {n} items to At home')}
           </Button>
           <Button variant="soft" icon={Trash2} className="w-full" disabled={moving}
-            onClick={() => { setClearing(false); removeAll(checked) }}>
+            onClick={clearBasket}>
             {t('Just remove them')}
           </Button>
           <ErrorText error={error} />
@@ -339,9 +386,9 @@ export default function ListPage() {
   )
 }
 
-function ItemRow({ item, recipeTitle, onToggle, onEdit, offerCount, similarCount, onOffers }: {
+function ItemRow({ item, recipeTitle, onToggle, onEdit, chosen, chains, offerCount, similarCount, onOffers }: {
   item: Item; recipeTitle?: string; onToggle: (i: Item) => void; onEdit: (i: Item) => void
-  offerCount?: number; similarCount?: number; onOffers?: (i: Item) => void
+  chosen?: Offer; chains: Map<string, Chain>; offerCount?: number; similarCount?: number; onOffers?: (i: Item) => void
 }) {
   return (
     <li className="flex items-center">
@@ -351,21 +398,76 @@ function ItemRow({ item, recipeTitle, onToggle, onEdit, offerCount, similarCount
           {item.checked && <Check className="size-4" strokeWidth={3} />}
         </span>
       </button>
-      <span className="min-w-0 flex-1 py-2.5">
-        <span className={`block truncate font-semibold ${item.checked ? 'text-muted line-through' : ''}`}>
-          {proper(item.name)}
-          {item.quantity && <span className="ml-2 font-normal text-muted">{item.quantity}</span>}
-        </span>
-        {recipeTitle && (
-          <span className="flex items-center gap-1 truncate text-xs text-muted">
-            <BookOpen className="size-3" /> {recipeTitle}
+      {chosen ? <ChosenOffer offer={chosen} chain={chains.get(chosen.chain)} quantity={item.quantity} checked={item.checked} onClick={onOffers && (() => onOffers(item))} /> : (
+        <span className="min-w-0 flex-1 py-2.5">
+          <span className={`block truncate font-semibold ${item.checked ? 'text-muted line-through' : ''}`}>
+            {proper(item.name)}
+            {item.quantity && <span className="ml-2 font-normal text-muted">{item.quantity}</span>}
           </span>
-        )}
-      </span>
-      {onOffers && (offerCount ? <OfferBadge count={offerCount} onClick={() => onOffers(item)} />
+          {recipeTitle && (
+            <span className="flex items-center gap-1 truncate text-xs text-muted">
+              <BookOpen className="size-3" /> {recipeTitle}
+            </span>
+          )}
+        </span>
+      )}
+      {onOffers && !chosen && (offerCount ? <OfferBadge count={offerCount} onClick={() => onOffers(item)} />
         : !!similarCount && <OfferBadge count={similarCount} similar onClick={() => onOffers(item)} />)}
       <IconButton icon={Pencil} label={t('Edit {name}', { name: item.name })} onClick={() => onEdit(item)} className="mr-1" />
     </li>
+  )
+}
+
+/** The exact product picked for an item, in place of its name: photo, heading, size and price, store. */
+function ChosenOffer({ offer: o, chain, quantity, checked, onClick }: {
+  offer: Offer; chain?: Chain; quantity: string; checked: boolean; onClick?: () => void
+}) {
+  const size = offerSize(o)
+  const short = shortfall(quantity, o)
+  // Tapping it opens the offers sheet to pick another; crossed-off items only show it.
+  const Box = onClick ? 'button' : 'span'
+  return (
+    <Box onClick={onClick}
+      className={`flex min-w-0 flex-1 items-center gap-3 py-2 text-left ${checked ? 'opacity-60' : ''}`}>
+      {o.image ? (
+        <img src={o.image} alt="" loading="lazy" className="size-14 shrink-0 rounded-xl bg-white object-contain ring-1 ring-line" />
+      ) : (
+        <span className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-soft text-muted"><Tag className="size-5" /></span>
+      )}
+      <span className="min-w-0 flex-1 space-y-0.5">
+        <span className={`block truncate font-semibold leading-tight ${checked ? 'line-through' : ''}`}>{o.heading}</span>
+        <span className="block truncate text-sm tabular-nums">
+          {size && <span className="text-muted">{size}, </span>}
+          <b className="text-brand-text">{formatPrice(o.price)}</b>
+        </span>
+        <ChainLogo chain={chain} className="h-4 w-12" />
+        {short && (
+          <span className="flex items-center gap-1 text-xs font-bold text-warn-text">
+            <CircleAlert className="size-3.5 shrink-0" strokeWidth={2.5} />
+            {t('Need {n} for {amount}', { n: short.packs, amount: short.wanted })}
+          </span>
+        )}
+      </span>
+    </Box>
+  )
+}
+
+/** What the picked offers cost together, and what they save where the flyer gives a before-price. */
+function PickedTotal({ offers }: { offers: Offer[] }) {
+  const total = offers.reduce((sum, o) => sum + o.price, 0)
+  const saved = offers.reduce((sum, o) => sum + saving(o), 0)
+  return (
+    <section className="flex items-center gap-3 rounded-2xl bg-card px-4 py-3 ring-1 ring-line">
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-extrabold">{tn(offers.length, '{n} offer picked', '{n} offers picked')}</span>
+        <span className="block truncate text-sm text-muted tabular-nums">{t('About {amount} in all', { amount: formatPrice(total, true) })}</span>
+      </span>
+      {saved > 0 && (
+        <span className="shrink-0 whitespace-nowrap rounded-full bg-brand-soft px-3 py-1 text-sm font-extrabold text-brand-text tabular-nums">
+          {t('Save {amount}', { amount: formatPrice(saved, true) })}
+        </span>
+      )}
+    </section>
   )
 }
 
