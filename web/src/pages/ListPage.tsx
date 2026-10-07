@@ -304,23 +304,23 @@ function ItemRow({ item, recipeTitle, onToggle, onEdit, offerCount, similarCount
 }) {
   return (
     <li className="flex items-center">
-      <button onClick={() => onToggle(item)} className="flex min-w-0 flex-1 items-center gap-3 py-2.5 pl-4 text-left active:bg-soft"
-        aria-pressed={item.checked}>
-        <span className={`flex size-6 shrink-0 items-center justify-center rounded-full border-2 transition ${item.checked ? 'border-brand bg-brand text-brand-ink' : 'border-line'}`}>
+      <button onClick={() => onToggle(item)} className="shrink-0 self-stretch pl-4 pr-3 active:bg-soft"
+        aria-pressed={item.checked} aria-label={t('Check off {name}', { name: item.name })}>
+        <span className={`flex size-6 items-center justify-center rounded-full border-2 transition ${item.checked ? 'border-brand bg-brand text-brand-ink' : 'border-line'}`}>
           {item.checked && <Check className="size-4" strokeWidth={3} />}
         </span>
-        <span className="min-w-0 flex-1">
-          <span className={`block truncate font-semibold ${item.checked ? 'text-muted line-through' : ''}`}>
-            {proper(item.name)}
-            {item.quantity && <span className="ml-2 font-normal text-muted">{item.quantity}</span>}
-          </span>
-          {recipeTitle && (
-            <span className="flex items-center gap-1 truncate text-xs text-muted">
-              <BookOpen className="size-3" /> {recipeTitle}
-            </span>
-          )}
-        </span>
       </button>
+      <span className="min-w-0 flex-1 py-2.5">
+        <span className={`block truncate font-semibold ${item.checked ? 'text-muted line-through' : ''}`}>
+          {proper(item.name)}
+          {item.quantity && <span className="ml-2 font-normal text-muted">{item.quantity}</span>}
+        </span>
+        {recipeTitle && (
+          <span className="flex items-center gap-1 truncate text-xs text-muted">
+            <BookOpen className="size-3" /> {recipeTitle}
+          </span>
+        )}
+      </span>
       {onOffers && (offerCount ? <OfferBadge count={offerCount} onClick={() => onOffers(item)} />
         : !!similarCount && <OfferBadge count={similarCount} similar onClick={() => onOffers(item)} />)}
       <IconButton icon={Pencil} label={t('Edit {name}', { name: item.name })} onClick={() => onEdit(item)} className="mr-1" />

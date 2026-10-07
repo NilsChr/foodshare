@@ -123,6 +123,7 @@ const NO: Record<string, string> = {
   'Crossed-off items count as “at home” for your recipes until you clear them.':
     'Avkryssede varer regnes som «hjemme» for oppskriftene til du tømmer dem.',
   'Edit {name}': 'Rediger {name}',
+  'Check off {name}': 'Kryss av {name}',
   'Make more of this shop': 'Få mer ut av handleturen',
   Hide: 'Skjul',
   'Uses {n} item on your list': 'Bruker {n} vare på listen',
