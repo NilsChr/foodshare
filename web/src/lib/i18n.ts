@@ -330,6 +330,7 @@ const NO: Record<string, string> = {
   '{n} offers': '{n} tilbud',
   'Offers: {name}': 'Tilbud: {name}',
   'Similar offers ({n})': 'Lignende tilbud ({n})',
+  'Show image': 'Vis bilde',
   'until {date}': 'til {date}',
   'Best match': 'Beste treff',
   'Filters': 'Filtre',

@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, ChevronDown, Tag } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { shortDate } from '../lib/dates'
 import { t } from '../lib/i18n'
 import { byUnitPrice, formatPrice, unitPrice } from '../lib/offers'
@@ -33,12 +33,22 @@ export function OfferBadge({ count, similar = false, onClick }: { count: number;
   )
 }
 
-/** One offer: photo, heading, flyer text, chain, price. `action` goes at the far right (e.g. an add button). */
+/**
+ * One offer: photo, heading, flyer text, chain, price. `action` goes at the far right (e.g. an add button).
+ * Tapping the row shows the photo full screen.
+ */
 export function OfferRow({ offer: o, chain, action }: { offer: Offer; chain?: Chain; action?: ReactNode }) {
+  // The thumbnail being shown full screen; null when closed.
+  const [zoom, setZoom] = useState<HTMLImageElement | null>(null)
+  const thumb = useRef<HTMLImageElement>(null)
   return (
-    <li className="flex gap-3 py-3">
+    <li className={`flex gap-3 py-3 ${o.image ? 'cursor-zoom-in' : ''}`} onClick={() => setZoom(thumb.current)}>
       {o.image ? (
-        <img src={o.image} alt="" loading="lazy" className="size-16 shrink-0 rounded-xl bg-white object-contain ring-1 ring-line" />
+        // The row takes taps; the button gives keyboard and screen reader users the same.
+        <button aria-label={t('Show image')} className="shrink-0">
+          <img ref={thumb} src={o.image} alt="" loading="lazy"
+            className={`size-16 rounded-xl bg-white object-contain ring-1 ring-line ${zoom ? 'invisible' : ''}`} />
+        </button>
       ) : (
         <span className="flex size-16 shrink-0 items-center justify-center rounded-xl bg-soft text-muted"><Tag className="size-6" /></span>
       )}
@@ -55,9 +65,72 @@ export function OfferRow({ offer: o, chain, action }: { offer: Offer; chain?: Ch
         {o.pre_price > o.price && <p className="text-xs text-muted line-through tabular-nums">{formatPrice(o.pre_price)}</p>}
         {o.discount_pct > 0 && <p className="text-xs font-bold text-brand-text">−{o.discount_pct}%</p>}
         <UnitPrice offer={o} />
-        {action}
+        {action && <div onClick={(e) => e.stopPropagation()}>{action}</div>}
       </div>
+      {zoom && <ImageZoom thumb={zoom} alt={o.heading} onClose={() => setZoom(null)} />}
     </li>
+  )
+}
+
+/** Where an image of `width` x `height` shows when fitted (object-contain) into `box`, less `pad` on each side. */
+function fit(width: number, height: number, box: { left: number; top: number; width: number; height: number }, pad = 0) {
+  const scale = Math.min((box.width - 2 * pad) / width, (box.height - 2 * pad) / height)
+  const w = width * scale
+  const h = height * scale
+  return { left: box.left + (box.width - w) / 2, top: box.top + (box.height - h) / 2, width: w, height: h }
+}
+
+/**
+ * The thumbnail's photo full screen, growing out of the thumbnail and shrinking back into it.
+ * Any tap or Escape closes it. Its own modal <dialog>, so it stacks above an open Sheet.
+ */
+function ImageZoom({ thumb, alt, onClose }: { thumb: HTMLImageElement; alt: string; onClose: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null)
+  const img = useRef<HTMLImageElement>(null)
+  const shade = useRef<HTMLDivElement>(null)
+  const closing = useRef(false)
+  // Not loaded yet (lazy): assume square.
+  const natural = [thumb.naturalWidth || 1, thumb.naturalHeight || 1] as const
+  const [target] = useState(() => fit(...natural, { left: 0, top: 0, width: innerWidth, height: innerHeight }, 16))
+
+  // The image's box and corners when it sits exactly over the thumbnail. Animating the box rather
+  // than a scale transform keeps the corners round all the way (a scale would shrink the radius).
+  const atThumb = (offset: number) => {
+    const r = thumb.getBoundingClientRect()
+    const borderRadius = getComputedStyle(thumb).borderRadius
+    return { offset, left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, borderRadius }
+  }
+  const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 280
+  const easing = 'cubic-bezier(0.2, 0, 0, 1)'
+
+  // Once, on open.
+  useEffect(() => {
+    dialog.current?.showModal()
+    img.current?.animate([atThumb(0)], { duration, easing })
+    shade.current?.animate([{ opacity: 0 }, { opacity: 1 }], { duration, easing })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const close = () => {
+    if (closing.current) return
+    closing.current = true
+    shade.current?.animate([{ opacity: 1 }, { opacity: 0 }], { duration, easing, fill: 'forwards' })
+    const anim = img.current?.animate([atThumb(1)], { duration, easing, fill: 'forwards' })
+    if (anim) anim.onfinish = onClose
+    else onClose()
+  }
+
+  return (
+    <dialog ref={dialog} aria-label={alt} onClick={close} onClose={onClose}
+      onCancel={(e) => {
+        e.preventDefault()
+        close()
+      }}
+      className="m-0 h-dvh max-h-none w-screen max-w-none bg-transparent p-0 backdrop:bg-transparent">
+      <div ref={shade} className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
+      <img ref={img} src={thumb.currentSrc || thumb.src} alt={alt} className="fixed rounded-2xl bg-white object-contain"
+        style={{ left: target.left, top: target.top, width: target.width, height: target.height }} />
+    </dialog>
   )
 }
 
