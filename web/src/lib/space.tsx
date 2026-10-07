@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { useMe } from './auth'
 import { createDefaultCategories } from './categories'
 import { useOffers } from './offers'
-import { col, type Category, type Chain, type Invite, type Item, type Meal, type Membership, type Offer, type PantryItem, type Recipe, type Space } from './pb'
+import { col, type Category, type Chain, type Invite, type Item, type Meal, type Membership, type Offer, type PantryItem, type Recipe, type RecipePrice, type Space } from './pb'
 import { useLiveRecords } from './realtime'
 
 const CURRENT_KEY = 'foodshare.space'
@@ -108,6 +108,8 @@ interface SpaceData {
   categories: Category[]
   meals: Meal[]
   pantry: PantryItem[]
+  /** What recipes cost at stores, newest first. */
+  recipePrices: RecipePrice[]
   members: Membership[]
   /** Every chain with flyer offers. */
   chains: Chain[]
@@ -121,6 +123,8 @@ interface SpaceData {
   removeMeal: (id: string) => void
   patchPantry: (item: PantryItem) => void
   removePantry: (id: string) => void
+  patchRecipePrice: (price: RecipePrice) => void
+  removeRecipePrice: (id: string) => void
   reloadMembers: () => void
 }
 
@@ -133,6 +137,7 @@ export function SpaceDataProvider({ space, children }: { space: Space; children:
   const categories = useLiveRecords(col.categories, space.id, 'sort')
   const meals = useLiveRecords(col.meals, space.id, 'date')
   const pantry = useLiveRecords(col.pantry, space.id)
+  const recipePrices = useLiveRecords(col.recipePrices, space.id)
   const [members, setMembers] = useState<Membership[]>([])
   const { chains, offers } = useOffers(space.chains ?? [])
 
@@ -151,6 +156,7 @@ export function SpaceDataProvider({ space, children }: { space: Space; children:
       categories: [...categories.records].sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name)),
       meals: meals.records,
       pantry: [...pantry.records].sort((a, b) => a.name.localeCompare(b.name)),
+      recipePrices: [...recipePrices.records].sort((a, b) => b.created.localeCompare(a.created)),
       members,
       chains,
       offers,
@@ -162,11 +168,13 @@ export function SpaceDataProvider({ space, children }: { space: Space; children:
       removeMeal: meals.remove,
       patchPantry: pantry.patch,
       removePantry: pantry.remove,
+      patchRecipePrice: recipePrices.patch,
+      removeRecipePrice: recipePrices.remove,
       reloadMembers,
     }),
     // patch/remove helpers only close over setState.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [space, items.records, recipes.records, categories.records, meals.records, pantry.records, members, chains, offers, items.loading, recipes.loading, categories.loading, reloadMembers],
+    [space, items.records, recipes.records, categories.records, meals.records, pantry.records, recipePrices.records, members, chains, offers, items.loading, recipes.loading, categories.loading, reloadMembers],
   )
   return <SpaceDataContext.Provider value={value}>{children}</SpaceDataContext.Provider>
 }

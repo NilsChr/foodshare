@@ -8,7 +8,9 @@ import { Button, ErrorText, IconButton, Input, PageHeader, Sheet, Spinner } from
 import { useMe } from '../lib/auth'
 import { addDays, dayName, shortDate, startOfWeek, toKey, todayKey, weekDays, weekNumber } from '../lib/dates'
 import { categorize, ingredientStatus, normalize, recipeReadiness, scaleQuantity } from '../lib/match'
-import { col, errorMessage, upsertMeal, type Meal, type Recipe } from '../lib/pb'
+import { col, errorMessage, upsertMeal, type Meal, type PantryItem, type Recipe, type RecipePrice } from '../lib/pb'
+import { formatPrice } from '../lib/offers'
+import { recipeCost } from '../lib/prices'
 import { useSpace } from '../lib/space'
 import { t, tn } from '../lib/i18n'
 
@@ -57,12 +59,15 @@ export default function WeekPage() {
                   {recipe ? (
                     <Link to={`/recipes/${recipe.id}`} className="flex min-w-0 flex-1 items-center gap-3">
                       <RecipeThumb recipe={recipe} className="size-14 rounded-2xl" />
-                      <span className="min-w-0">
+                      <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-1.5">
-                          <span className="truncate font-extrabold">{recipe.title}</span>
+                          <span className="line-clamp-2 font-extrabold leading-tight">{recipe.title}</span>
                           {meal.factor > 1 && <span className="shrink-0 rounded-full bg-brand-soft px-1.5 text-xs font-black text-brand-text">×{meal.factor}</span>}
                         </span>
-                        <Readiness recipe={recipe} onAdd={() => setAdding({ recipe, factor: meal.factor || 1 })} />
+                        <span className="flex flex-wrap items-center justify-between gap-x-2">
+                          <Readiness recipe={recipe} onAdd={() => setAdding({ recipe, factor: meal.factor || 1 })} />
+                          <MealCost meal={meal} />
+                        </span>
                       </span>
                     </Link>
                   ) : (
@@ -82,6 +87,7 @@ export default function WeekPage() {
             </article>
           )
         })}
+        <WeekCost days={days.map(toKey)} />
         <ShopForWeek days={days.map(toKey)} />
       </main>
 
@@ -109,6 +115,36 @@ function Readiness({ recipe, onAdd }: { recipe: Recipe; onAdd: () => void }) {
         </button>
       )}
     </span>
+  )
+}
+
+/** What a planned dinner costs: the recipe's latest price without what is at home, times the factor. */
+function mealCost(meal: Meal, prices: RecipePrice[], pantry: PantryItem[]) {
+  const cost = meal.recipe ? recipeCost(meal.recipe, prices, pantry) : null
+  return cost === null ? null : cost * (meal.factor || 1)
+}
+
+function MealCost({ meal }: { meal: Meal }) {
+  const { recipePrices, pantry } = useSpace()
+  const cost = mealCost(meal, recipePrices, pantry)
+  return cost === null ? null : <span className="ml-auto text-sm font-bold tabular-nums text-muted">{formatPrice(cost, true)}</span>
+}
+
+/** Sum of the week's dinners that have a price; says how many planned recipes have none. */
+function WeekCost({ days }: { days: string[] }) {
+  const { meals, recipePrices, pantry } = useSpace()
+  const planned = meals.filter((m) => days.includes(m.date) && m.recipe)
+  const costs = planned.map((m) => mealCost(m, recipePrices, pantry)).filter((c) => c !== null)
+  if (!costs.length) return null
+  const missing = planned.length - costs.length
+  return (
+    <div className="flex items-baseline justify-between gap-3 px-2 pt-2">
+      <span className="font-extrabold">{t('Dinners this week')}</span>
+      <span className="text-right">
+        <span className="font-black tabular-nums">{formatPrice(costs.reduce((a, b) => a + b, 0), true)}</span>
+        {missing > 0 && <span className="block text-xs text-muted">{tn(missing, '{n} dinner has no price', '{n} dinners have no price')}</span>}
+      </span>
+    </div>
   )
 }
 

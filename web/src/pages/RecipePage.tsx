@@ -1,6 +1,7 @@
 import { CalendarPlus, Clock, ExternalLink, Tag, ChevronLeft, ListMinus, ListPlus, Pencil, Users } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
+import { PriceSection } from '../components/prices'
 import { AddToListSheet, DoubleToggle, FavoriteButton, planRecipe, recipeItems, STATUS } from '../components/recipe'
 import { Button, Empty, ErrorText, IconButton, Sheet, Spinner } from '../components/ui'
 import { addDays, dayName, fromKey, shortDate, startOfWeek, toKey, todayKey } from '../lib/dates'
@@ -111,6 +112,8 @@ export default function RecipePage() {
             </div>
           </section>
         )}
+
+        {!!recipe.ingredients?.length && <PriceSection recipe={recipe} />}
 
         {recipe.instructions && (
           <section className="pb-6">

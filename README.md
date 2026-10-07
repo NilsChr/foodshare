@@ -60,6 +60,7 @@ All space data is reachable only by members of the space (`space.memberships_via
 | `categories` | Store sections per space with `keywords`, in walking order (`sort`, drag to reorder). `group_with` shows a section under another's header in the list. Default names are stored in English and shown translated until renamed. |
 | `items` | Shopping list. `checked` = in the basket. `recipe` links items added from a recipe. `product_type` and `offer_matches` (confirmed offer ids, null = not checked yet) are set by the server for offer matching. |
 | `recipes` | `ingredients` is JSON `[{name, quantity}]`; `image` has thumbs; `favorited_by` is per-user favorites; `minutes` = cooking time; `tags` is a JSON string list; `source`/`source_url` record where an import came from (unique per space). |
+| `recipe_prices` | What a recipe cost at a store, entered by hand on the recipe page: `chain`, `lines` JSON `[{name, price}]` per ingredient line, `total`. Not editable; delete and enter again. The recipe page shows the latest price per store, minus lines that match the pantry, and the full history. |
 | `meals` | One dinner per space and day (`date` = `YYYY-MM-DD`): a recipe or a free-text `note`. `factor` 2 = doubled for leftovers. |
 | `chains` | Grocery chains with name, `logo` URL and brand `color`. Shared, read-only for users; written by the offers sync. |
 | `offers` | This week's flyer offers, `chain` relation, `category` and `product_type` from the classifier. Shared, read-only for users; replaced by the offers sync. |

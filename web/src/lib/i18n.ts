@@ -346,6 +346,24 @@ const NO: Record<string, string> = {
   pcs: 'stk',
   'From this week’s flyers. Prices and stock can vary between stores.': 'Fra ukens kundeaviser. Pris og utvalg kan variere mellom butikkene.',
 
+  // Recipe prices
+  'Add price': 'Legg til pris',
+  '{total} in all; {names} at home': '{total} totalt; {names} har dere hjemme',
+  'Add what the ingredients cost at a store to see what the recipe costs.': 'Legg inn hva ingrediensene kostet i en butikk, så ser du hva oppskriften koster.',
+  'History ({n})': 'Historikk ({n})',
+  'Delete price': 'Slett pris',
+  'Price of {title}': 'Pris på {title}',
+  'Price of {name}': 'Pris på {name}',
+  Store: 'Butikk',
+  'Your stores': 'Gruppens butikker',
+  'Other stores': 'Andre butikker',
+  'What each line cost. Leave blank what you did not buy.': 'Hva hver linje kostet. La stå tomt det du ikke kjøpte.',
+  Total: 'Totalt',
+  'Save price': 'Lagre pris',
+  'Dinners this week': 'Ukens middager',
+  '{n} dinner has no price': '{n} middag mangler pris',
+  '{n} dinners have no price': '{n} middager mangler pris',
+
   // Default store sections
   Vegetables: 'Grønnsaker',
   Fruit: 'Frukt',

@@ -120,6 +120,16 @@ export interface Offer extends RecordModel {
   product_type: string
 }
 
+/** What a recipe cost at a store: the price of each ingredient line and their sum. */
+export interface RecipePrice extends RecordModel {
+  space: string
+  recipe: string
+  chain: string
+  lines: { name: string; price: number }[] | null
+  total: number
+  created_by: string
+}
+
 export const col = {
   spaces: () => pb.collection<Space>('spaces'),
   memberships: () => pb.collection<Membership>('memberships'),
@@ -132,6 +142,7 @@ export const col = {
   users: () => pb.collection<User>('users'),
   chains: () => pb.collection<Chain>('chains'),
   offers: () => pb.collection<Offer>('offers'),
+  recipePrices: () => pb.collection<RecipePrice>('recipe_prices'),
 }
 
 export function recipeImage(recipe: Recipe, thumb?: '400x300' | '800x600' | '120x120') {

@@ -110,9 +110,27 @@ check("bob picks group stores",
 check("eve cannot pick stores for the group",
   (await call(eve.token, "PATCH", `/api/collections/spaces/records/${space.id}`, { chains: [] })).status, 404);
 
-check("alice deletes space", (await call(alice.token, "DELETE", `/api/collections/spaces/records/${space.id}`)).status, 204);
+// Recipe prices: members only, and the recipe must be in the same space.
+const recipe = (await call(alice.token, "POST", "/api/collections/recipes/records", { space: space.id, title: "Taco" })).body;
+const price = (await call(alice.token, "POST", "/api/collections/recipe_prices/records", {
+  space: space.id, recipe: recipe.id, chain: chains.items[0].id, lines: [{ name: "Paprika", price: 15 }], total: 15,
+})).body;
+check("member adds recipe price", !!price.id, true);
+check("eve cannot view recipe price", (await call(eve.token, "GET", `/api/collections/recipe_prices/records/${price.id}`)).status, 404);
+check("eve cannot add recipe price",
+  (await call(eve.token, "POST", "/api/collections/recipe_prices/records", { space: space.id, recipe: recipe.id, chain: chains.items[0].id })).status, 400);
+const eveSpace = (await call(eve.token, "POST", "/api/collections/spaces/records", { name: "Eve test", owner: eve.id })).body;
+await call(eve.token, "POST", "/api/collections/memberships/records", { space: eveSpace.id, user: eve.id });
+check("eve cannot price alice's recipe from her own space",
+  (await call(eve.token, "POST", "/api/collections/recipe_prices/records", { space: eveSpace.id, recipe: recipe.id, chain: chains.items[0].id })).status, 400);
+check("recipe price cannot be edited",
+  (await call(alice.token, "PATCH", `/api/collections/recipe_prices/records/${price.id}`, { total: 1 })).status, 403);
+check("eve deletes her space", (await call(eve.token, "DELETE", `/api/collections/spaces/records/${eveSpace.id}`)).status, 204);
+
+check("alice deletes space",(await call(alice.token, "DELETE", `/api/collections/spaces/records/${space.id}`)).status, 204);
 check("item cascade-deleted", (await call(admin, "GET", `/api/collections/items/records/${item.id}`)).status, 404);
-check("pantry cascade-deleted", (await call(admin, "GET", `/api/collections/pantry/records/${stock.id}`)).status, 404);
+check("recipe price cascade-deleted", (await call(admin, "GET", `/api/collections/recipe_prices/records/${price.id}`)).status, 404);
+check("pantry cascade-deleted",(await call(admin, "GET", `/api/collections/pantry/records/${stock.id}`)).status, 404);
 
 console.log(failed ? `${failed} failed` : "all passed");
 process.exit(failed ? 1 : 0);

@@ -6,12 +6,14 @@ import { FavoriteButton, RecipeThumb } from '../components/recipe'
 import { Empty, Input, PageHeader, Spinner } from '../components/ui'
 import { useMe } from '../lib/auth'
 import { normalize, recipeOnList, spaceTags } from '../lib/match'
+import { formatPrice } from '../lib/offers'
+import { recipeCost } from '../lib/prices'
 import { useSpace } from '../lib/space'
 import { t, tn } from '../lib/i18n'
 
 export default function RecipesPage() {
   const me = useMe()
-  const { recipes, items, loading } = useSpace()
+  const { recipes, items, pantry, recipePrices, loading } = useSpace()
   const [query, setQuery] = useState('')
   const [favorites, setFavorites] = useState(false)
   const [maxMinutes, setMaxMinutes] = useState(0)
@@ -85,7 +87,9 @@ export default function RecipesPage() {
           <Empty icon={Search} title={t('Nothing found')}>{tag || maxMinutes ? t('No recipes match the filters.') : favorites ? t('No favourites match.') : t('Try another word.')}</Empty>
         ) : (
           <div className="grid grid-cols-2 gap-3 pb-4 sm:grid-cols-3">
-            {shown.map((r) => (
+            {shown.map((r) => {
+              const cost = recipeCost(r.id, recipePrices, pantry)
+              return (
               <Link key={r.id} to={`/recipes/${r.id}`} className="group overflow-hidden rounded-3xl bg-card shadow-sm ring-1 ring-line">
                 <div className="relative">
                   <RecipeThumb recipe={r} thumb="400x300" className="aspect-[4/3] w-full" />
@@ -101,10 +105,12 @@ export default function RecipesPage() {
                   <p className="mt-0.5 flex items-center gap-2 text-xs text-muted">
                     {r.minutes > 0 && <span className="inline-flex items-center gap-1 font-bold"><Clock className="size-3.5" /> {t('{n} min', { n: r.minutes })}</span>}
                     <span>{tn(r.ingredients?.length ?? 0, '{n} ingredient', '{n} ingredients')}</span>
+                    {cost !== null && <span className="ml-auto font-bold tabular-nums">{formatPrice(cost, true)}</span>}
                   </p>
                 </div>
               </Link>
-            ))}
+              )
+            })}
           </div>
         )}
       </main>
