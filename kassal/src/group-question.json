@@ -1,0 +1,20 @@
+{
+  "new_choice_1": {
+    "type": "choice",
+    "instructions": "Hvilken kategori tilhører dette produktet?",
+    "criteria": {
+      "meat": "Produktet er av typen kjøtt, f.eks. kyllingfilet, kylling, kyllingvinger, svinenakke / nakkekotelett, svinekotelett, svineindrefilet, svineytrefilet, spareribs, bacon, kjøttdeig, biff, indrefilet av storfe, hamburger, pølse, skinke, lam, spekemat, kjøttkaker, grillspyd, ribbe, pinnekjøtt, kalkun, medisterdeig, fårikålkjøtt, leverpostei",
+      "fish": "Produktet er av typen fisk eller sjømat, f.eks. laks, torsk, reker, makrell, sild, ørret, tunfisk, fiskekaker, skalldyr, lutefisk, kaviar",
+      "dairy_eggs": "Produktet er av typen meieri eller egg, f.eks. gulost, hvit ost, brunost, kremost, melk, yoghurt, fløte, smør og margarin, egg, risgrøt, grillost, rømme",
+      "vegetables": "Produktet er av typen grønnsak, f.eks. tomat, agurk, salat, potet, gulrot, løk, hvitløk, brokkoli, blomkål, kål, paprika, sopp, asparges, squash, mais, reddik, purre, spinat, erter og bønner, ferdigsalat",
+      "fruit": "Produktet er av typen frukt eller bær, f.eks. avokado, banan, eple, sitrusfrukt, druer, jordbær, blåbær, bringebær, melon, steinfrukt, moreller, mango, pære, ananas",
+      "bakery": "Produktet er av typen bakst eller brød, f.eks. brød, burgerbrød, pølsebrød, focaccia, tortilla, knekkebrød, pizzabunn, kake, lefse",
+      "pantry": "Produktet er en tørrvare eller kolonialvare, f.eks. pasta, ris, mel, havregryn, hermetiske tomater / tomatsaus, majones, ketchup, sennep, dressing, matolje, sukker, syltetøy, krydder, saus, kaffe, te, honning, bønner og linser",
+      "snacks": "Produktet er av typen snacks eller godteri, f.eks. iskrem, nøtter, potetchips, sjokolade, godteri, kjeks",
+      "meals": "Produktet er en ferdigrett eller et halvfabrikat, f.eks. frossenpizza, pommes frites, ferdigmat, pannekaker, pai, suppe",
+      "drinks": "Produktet er av typen drikke, f.eks. brus, vann på flaske, juice, alkoholfritt øl, energidrikk, smoothie, iste, saft",
+      "household": "Produktet er en husholdningsvare eller et produkt for pleie og hygiene, f.eks. toalettpapir, solkrem, bleier, rengjøring, apotekvarer, personlig pleie",
+      "annet": "Produktet tilhører ingen av de andre kategoriene, f.eks. blomster, grillkull"
+    }
+  }
+}

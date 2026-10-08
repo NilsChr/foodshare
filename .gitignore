@@ -22,5 +22,3 @@ pb_data/
 .vscode/*
 !.vscode/extensions.json
 
-# Local scripts and data (Jev labelling of the Kassal catalog)
-scratchpad/

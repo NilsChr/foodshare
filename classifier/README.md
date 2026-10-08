@@ -22,7 +22,7 @@ thousand short headings is not enough data for a neural model to beat this.
 cd classifier
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python export.py    # this week's classified offers -> data/offers-<date>.jsonl
-.venv/bin/python prepare_kassal.py  # data/raw/kassal-jev.json -> data/kassal-jev.jsonl (optional)
+.venv/bin/python prepare_kassal.py  # ../kassal/data/enriched.json -> data/kassal-jev.jsonl (optional)
 .venv/bin/python train.py     # agreement with Jev on a held-out 20%, saves model/
 .venv/bin/python serve.py     # HTTP API on :8091
 ```
@@ -32,10 +32,10 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 so export every week: `train.py` uses every file in `data/` (one row per distinct offer,
 newest label wins). `data/` is git-ignored; `model/` is committed.
 
-`data/raw/kassal-jev.json` is a list of Kassal products (`title`, `name`, `category`, `ean`, ...),
-each with Jev's product group (`jev_response.answers.new_choice`, "annet" for `other`) and, once
-per title, its product type (`jev_type_response.answers.product`, asked within the likeliest
-groups like the app does; `scratchpad/add_jev_type_to_enriched.ts`, ~700 input tokens per title).
+`kassal/data/enriched.json` (see `kassal/README.md`) is a list of Kassal products (`title`,
+`name`, `category`, `ean`, ...), each with Jev's product group (`jev_response.answers.new_choice`,
+"annet" for `other`) and, once per title, its product type (`jev_type_response.answers.product`,
+asked within the likeliest groups like the app does).
 `prepare_kassal.py` writes one row per distinct title with both labels and their probabilities;
 `model.kassal_examples()` uses those with p ≥ 0.9. Without the file the group and type models
 train on offers and the type list only.

@@ -1,0 +1,22 @@
+{
+  "name": "kassal",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.9.0"
+  },
+  "private": true,
+  "scripts": {
+    "categories": "bun src/categories.ts",
+    "products": "bun src/products.ts",
+    "enrich": "bun src/enrich.ts",
+    "scrape": "bun src/scrape.ts",
+    "summary": "bun src/summary.ts",
+    "label-group": "bun src/label-group.ts",
+    "label-type": "bun src/label-type.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "type": "module",
+  "dependencies": {
+    "cheerio": "^1.2.0"
+  }
+}

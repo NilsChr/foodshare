@@ -1,0 +1,4 @@
+node_modules/
+# Scraped and labelled data is local; the Jev API key too.
+data/
+.env

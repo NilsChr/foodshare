@@ -8,6 +8,7 @@ Shared food planner PWA for families, friends and flatmates: shared live shoppin
 - `pocketbase/pb_hooks/` — server hooks (recipe import; merging list items with the same name, `merge_items.pb.js`; grocery offers sync, `offers_sync.pb.js`).
 - `docker-compose.yml` — local PocketBase with schema and demo data. See "Local development".
 - `classifier/` — our own offer and item classifier (scikit-learn, HTTP API), trained on Jev's labels; admins can switch the app from Jev to it. See `classifier/README.md`.
+- `kassal/` — Kassal.app's product catalog: scraper and the scripts that had Jev label it; the training data for `classifier/`. See `kassal/README.md`.
 - `pocketbase/Dockerfile` — PocketBase v0.40.4 with the hooks baked in. See "Deploying PocketBase".
 
 ## Setup

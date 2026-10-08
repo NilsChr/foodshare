@@ -1,10 +1,10 @@
 """Turns Jev's labels for Kassal's product catalog into training data.
 
-    python prepare_kassal.py    # data/raw/kassal-jev.json -> data/kassal-jev.jsonl
+    python prepare_kassal.py    # ../kassal/data/enriched.json -> data/kassal-jev.jsonl
 
-The raw file is a list of Kassal products (title, name, brand, category, ean ...) with Jev's
+The source is a list of Kassal products (title, name, brand, category, ean ...) with Jev's
 answers: the product group in jev_response, the product type in jev_type_response (asked
-once per title, from scratchpad/add_jev_type_to_enriched.ts). Writes one row per distinct
+once per title). See kassal/README.md. Writes one row per distinct
 title with each label and its probability; model.kassal_examples() picks the sure ones.
 Group keys are those of product_types.json ("annet" is "other" there).
 """
@@ -14,7 +14,7 @@ import json
 
 from model import DATA
 
-RAW = DATA / "raw" / "kassal-jev.json"
+RAW = DATA.parent.parent / "kassal" / "data" / "enriched.json"
 OUT = DATA / "kassal-jev.jsonl"
 
 
