@@ -57,6 +57,7 @@ All space data is reachable only by members of the space (`space.memberships_via
 | `spaces` | A group (shown as "Group" in the UI). `owner` can delete it and remove members. `chains` = the stores whose offers the group sees (none = no offers shown). |
 | `memberships` | `space` + `user`. You can only create your own membership: as the owner, or with a pending invite to your email. |
 | `invites` | Invite by email. The invitee sees it after sign-in and accepts (creates membership, deletes invite). |
+| `allowed_emails` | Invite-only sign-up list, superusers only. `email` (case-insensitive) may create an account; a row with `*` opens sign-up to everyone. |
 | `categories` | Store sections per space with `keywords`, in walking order (`sort`, drag to reorder). `group_with` shows a section under another's header in the list. Default names are stored in English and shown translated until renamed. |
 | `items` | Shopping list. `checked` = in the basket. `recipe` links items added from a recipe. `product_type` and `offer_matches` (confirmed offer ids, null = not checked yet) are set by the server for offer matching. `offer` = the flyer offer a member picked for the item (e.g. which size); PocketBase clears it when the offers sync deletes that offer. |
 | `recipes` | `ingredients` is JSON `[{name, quantity}]`; `image` has thumbs; `favorited_by` is per-user favorites; `minutes` = cooking time; `tags` is a JSON string list; `source`/`source_url` record where an import came from (unique per space). |
@@ -139,3 +140,5 @@ English and Norwegian (bokmål). The browser language picks the default; users c
 ## Sign-in
 
 The login screen shows whatever the `users` collection enables: password, email code (OTP), and Google (OAuth2). To turn on Google and OTP, open the PocketBase dashboard → `users` collection → Options. OTP also needs SMTP under Settings → Mail.
+
+Sign-up is invite only (`pb_hooks/invite_only.pb.js`): a new account, by any method, needs its email in `allowed_emails` or a pending space invite. Others get 403 and the login screen says the app is invite only. Existing accounts sign in as before. Add emails in the dashboard; add a row with email `*` to let anyone sign up.

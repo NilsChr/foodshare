@@ -43,7 +43,8 @@ export default function Login() {
     try {
       await fn()
     } catch (e) {
-      setError(errorMessage(e))
+      // 403 on sign-up: the email is not invited (pocketbase/pb_hooks/invite_only.pb.js).
+      setError((e as { status?: number }).status === 403 ? t('Foodshare is invite only for now. Ask someone who uses it to invite you.') : errorMessage(e))
     } finally {
       setBusy(false)
     }
@@ -63,9 +64,12 @@ export default function Login() {
     e.preventDefault()
     run(async () => {
       if (!otpId) {
-        // OTP only signs in existing accounts, so make sure one exists. A duplicate email simply fails here.
+        // OTP only signs in existing accounts, so make sure one exists. A duplicate email simply fails
+        // here; a refused one (not invited, 403) stops, since no code would ever arrive.
         const random = crypto.randomUUID()
-        await users().create({ email, password: random, passwordConfirm: random }).catch(() => {})
+        await users().create({ email, password: random, passwordConfirm: random }).catch((e) => {
+          if (e.status === 403) throw e
+        })
         setOtpId((await users().requestOTP(email)).otpId)
       } else {
         await users().authWithOTP(otpId, code.trim())

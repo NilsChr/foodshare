@@ -81,6 +81,8 @@ const NO: Record<string, string> = {
   'Create an account': 'Opprett en konto',
   'Sign in with password instead': 'Logg inn med passord i stedet',
   'Sign in with an email code instead': 'Logg inn med kode på e-post i stedet',
+  'Foodshare is invite only for now. Ask someone who uses it to invite you.':
+    'Foodshare er foreløpig kun for inviterte. Be noen som bruker appen om å invitere deg.',
 
   // Name step
   'What should we call you?': 'Hva skal vi kalle deg?',
