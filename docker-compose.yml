@@ -21,6 +21,8 @@ services:
       # No nightly offers sync and classify locally (setup syncs once on start, without Jev).
       # Classify by hand: POST /api/foodshare/offers-classify. OFFERS_CRON=on to test the cron.
       OFFERS_CRON: ${OFFERS_CRON:-off}
+      # Local classifier (admin setting "local"): the classifier service below.
+      CLASSIFIER_URL: ${CLASSIFIER_URL:-http://classifier:8091}
     ports: ["${PB_PORT:-8090}:8080"]
     volumes:
       - ./pocketbase/pb_data:/pb/pb_data
@@ -34,8 +36,9 @@ services:
       - /pb/pocketbase superuser upsert "$$POCKETBASE_USER" "$$POCKETBASE_PASS" --dir=/pb/pb_data
         && exec /pb/pocketbase serve --http=0.0.0.0:8080 --dir=/pb/pb_data --hooksDir=/pb/pb_hooks
 
-  # Experimental offer classifier (classifier/README.md). Not started by default:
-  #   docker compose --profile classifier up classifier
+  # Local offer classifier (classifier/README.md), used when an admin picks "local" in the app.
+  # Serves the models in classifier/model (mounted, so a retrain needs no rebuild). Not started by default:
+  #   docker compose --profile classifier up
   classifier:
     profiles: [classifier]
     build: { context: ., dockerfile: classifier/Dockerfile }

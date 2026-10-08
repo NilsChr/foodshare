@@ -1,5 +1,5 @@
 import {
-  Check, ChevronRight, Newspaper, PiggyBank, Languages, Link2, Crown, LogOut, Pencil, Plus, Send, Trash2, UserMinus, X,
+  Check, ChevronRight, Cpu, Newspaper, PiggyBank, Languages, Link2, Crown, LogOut, Pencil, Plus, Send, Trash2, UserMinus, X,
 } from 'lucide-react'
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router'
@@ -9,7 +9,7 @@ import SectionOrder from '../components/SectionOrder'
 import { Avatar, Button, RollingNumber, ErrorText, Field, IconButton, Input, PageHeader, Sheet } from '../components/ui'
 import { useMe } from '../lib/auth'
 import { CATEGORY_ICONS, categoryIcon, categoryName, groupMembers } from '../lib/categories'
-import { col, displayName, errorMessage, pb, type Category, type Chain, type Invite } from '../lib/pb'
+import { col, displayName, errorMessage, pb, type AppSettings, type Category, type Chain, type Invite } from '../lib/pb'
 import { useSpace, useSpaces } from '../lib/space'
 import { lang, locale, setLang, t, tn } from '../lib/i18n'
 import { formatPrice, saving } from '../lib/offers'
@@ -106,6 +106,8 @@ export default function SpacePage() {
         </Section>
 
         <Account />
+
+        {me.admin && <Admin />}
 
         {isOwner && <DeleteSpace />}
 
@@ -520,6 +522,69 @@ function Account() {
           await col.users().update(me.id, { name })
           await pb.collection('users').authRefresh()
         }} />
+    </Section>
+  )
+}
+
+function Admin() {
+  const [settings, setSettings] = useState<AppSettings | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState('')
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    col.appSettings().getFirstListItem('').then(setSettings).catch((e) => setError(errorMessage(e)))
+  }, [])
+
+  async function pick(classifier: AppSettings['classifier']) {
+    if (!settings || classifier === settings.classifier) return
+    setError('')
+    try {
+      setSettings(await col.appSettings().update(settings.id, { classifier }))
+    } catch (e) {
+      setError(errorMessage(e))
+    }
+  }
+
+  async function classify() {
+    setBusy(true)
+    setNote('')
+    setError('')
+    try {
+      const r = await pb.send<{ classified: number; items: number; stopped?: string; skipped?: string }>(
+        '/api/foodshare/offers-classify', { method: 'POST' })
+      const reason = r.stopped || r.skipped
+      setNote(reason ? t('Stopped: {reason}', { reason }) : t('Classified {n} offers, {items} list items.', { n: r.classified, items: r.items }))
+    } catch (e) {
+      setError(errorMessage(e))
+    }
+    setBusy(false)
+  }
+
+  return (
+    <Section title={t('Admin')}>
+      <div className={card}>
+        <div className="flex items-center gap-3 px-4 py-3">
+          <Cpu className="size-5 text-muted" />
+          <span className="flex-1 font-bold">{t('Classifier')}</span>
+          <div className="flex rounded-full bg-soft p-1">
+            {([['jev', 'Jev'], ['local', t('Local model')]] as const).map(([key, label]) => (
+              <button key={key} onClick={() => pick(key)} aria-pressed={key === settings?.classifier} disabled={!settings}
+                className={`rounded-full px-3 py-1 text-sm font-bold transition ${key === settings?.classifier ? 'bg-card shadow-sm' : 'text-muted'}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-3 px-4 py-3">
+          <p className="text-sm text-muted">
+            {t('Labels offers and new list items with a product type and store section. Jev is paid per request; the local model is free but does not check which offers an item means.')}
+          </p>
+          <Button variant="soft" icon={Newspaper} className="w-full" busy={busy} onClick={classify}>{t('Classify offers now')}</Button>
+          {note && <p className="text-sm">{note}</p>}
+          <ErrorText error={error} />
+        </div>
+      </div>
     </Section>
   )
 }

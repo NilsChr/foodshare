@@ -34,8 +34,9 @@ const CRITERIA = {
 // passed. Returns counts and the Jev input tokens used (the cost). Stops early on rate
 // limits or outages; the next run continues where this one stopped.
 function classifyOffers(app, seconds) {
-  if (!$os.getenv("TYPESAFE_API_KEY")) return { skipped: "TYPESAFE_API_KEY is not set" }
   const types = require(`${__hooks}/product_types.js`)
+  if (types.classifier(app) === "local") return classifyOffersLocal(app, seconds)
+  if (!$os.getenv("TYPESAFE_API_KEY")) return { skipped: "TYPESAFE_API_KEY is not set" }
 
   const deadline = Date.now() + seconds * 1000
   const result = { classified: 0, remaining: 0, items: 0, matched: 0, tokens: 0, stopped: "" }
@@ -73,6 +74,37 @@ function classifyOffers(app, seconds) {
     result.matched = require(`${__hooks}/offer_matches.js`).backfillMatches(app, deadline, usage)
   }
   result.tokens = usage.tokens
+  return result
+}
+
+// The same with the local classifier (product_types.js). It labels all offers, not only
+// new ones: ~1200 take well under a second, and offers labelled by Jev before the switch get
+// the local labels too. No offer matches: the local classifier has no model for them, so
+// items keep what they have (unchecked items show their type's offers as similar).
+function classifyOffersLocal(app, seconds) {
+  const types = require(`${__hooks}/product_types.js`)
+  const deadline = Date.now() + seconds * 1000
+  const result = { classified: 0, remaining: 0, items: 0, matched: 0, tokens: 0, stopped: "" }
+  const offers = app.findRecordsByFilter("offers", "", "-discount_pct", 0, 0)
+  const BATCH = 500
+  for (let start = 0; start < offers.length; start += BATCH) {
+    const batch = offers.slice(start, start + BATCH)
+    let labels
+    try {
+      labels = types.classifyLocal(batch.map((o) => ({ heading: o.getString("heading"), description: o.getString("description") })), 30)
+    } catch (err) {
+      result.stopped = String(err)
+      break
+    }
+    batch.forEach((record, i) => {
+      if (CRITERIA[labels[i].category.choice]) record.set("category", labels[i].category.choice)
+      record.set("product_type", types.localType(labels[i]))
+      app.save(record)
+      result.classified++
+    })
+  }
+  result.remaining = offers.length - result.classified
+  if (!result.stopped) result.items = types.backfillItems(app, deadline)
   return result
 }
 

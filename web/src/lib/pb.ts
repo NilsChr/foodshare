@@ -8,6 +8,13 @@ export interface User extends RecordModel {
   email: string
   name: string
   avatar: string
+  /** Set by superusers in the dashboard; shows the admin section. */
+  admin: boolean
+}
+
+/** One record, admins only: what labels offers and list items (see pb_hooks/product_types.js). */
+export interface AppSettings extends RecordModel {
+  classifier: 'jev' | 'local'
 }
 
 export interface Space extends RecordModel {
@@ -157,6 +164,7 @@ export const col = {
   offers: () => pb.collection<Offer>('offers'),
   recipePrices: () => pb.collection<RecipePrice>('recipe_prices'),
   purchases: () => pb.collection<Purchase>('purchases'),
+  appSettings: () => pb.collection<AppSettings>('app_settings'),
 }
 
 export function recipeImage(recipe: Recipe, thumb?: '400x300' | '800x600' | '120x120') {

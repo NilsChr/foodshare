@@ -80,6 +80,9 @@ function matchItem(app, item, timeout, usage) {
     item.set("offer_matches", type ? [] : null)
     return true
   }
+  // The local classifier has no model for this; the item keeps what it has (unchecked: the
+  // app shows its type's offers as similar).
+  if (types.classifier(app) === "local") return true
   const name = types.normalize(item.getString("name"))
   const words = name.split(" ")
   let chains = []

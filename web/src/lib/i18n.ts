@@ -389,6 +389,16 @@ const NO: Record<string, string> = {
   '{n} dinner has no price': '{n} middag mangler pris',
   '{n} dinners have no price': '{n} middager mangler pris',
 
+  // Admin
+  Admin: 'Admin',
+  Classifier: 'Klassifisering',
+  'Local model': 'Lokal modell',
+  'Labels offers and new list items with a product type and store section. Jev is paid per request; the local model is free but does not check which offers an item means.':
+    'Gir tilbud og nye varer på lista produkttype og butikkseksjon. Jev koster per forespørsel; den lokale modellen er gratis, men sjekker ikke hvilke tilbud en vare betyr.',
+  'Classify offers now': 'Klassifiser tilbud nå',
+  'Classified {n} offers, {items} list items.': 'Klassifiserte {n} tilbud og {items} varer.',
+  'Stopped: {reason}': 'Stoppet: {reason}',
+
   // Default store sections
   Vegetables: 'Grønnsaker',
   Fruit: 'Frukt',

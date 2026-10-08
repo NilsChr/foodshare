@@ -5,8 +5,12 @@
 // `coffee`. The types and their flyer words come from product_types.json.
 //
 // Offers get their type in offers_classify.js. List items get theirs here, by name:
-// shared cache (`product_names`), then the type list's names and aliases, then Jev.
-// Every name is resolved once for all users.
+// shared cache (`product_names`), then the type list's names and aliases, then Jev or the
+// local classifier. Every name is resolved once for all users.
+//
+// Which one labels offers and names is an admin setting (`app_settings.classifier`):
+// "jev" (default) or "local", our own model (classifier/serve.py at CLASSIFIER_URL; trained
+// on Jev's labels, free to run). The local classifier has no model for offer matches.
 //
 // Jev picks the type in two steps, group then type within the group (TypeSafe's
 // hierarchical classification). One question over all 137 types cost ~5000 input tokens
@@ -77,6 +81,37 @@ function askJev(text, questions, timeout) {
   return { answers: res.json.answers || {}, tokens: (res.json.usage || {}).input_tokens || 0 }
 }
 
+// "jev" or "local", from the admin setting; "jev" when it is missing.
+function classifier(app) {
+  try {
+    return app.findFirstRecordByFilter("app_settings", "id != ''").getString("classifier") || "jev"
+  } catch (_) {
+    return "jev"
+  }
+}
+
+// Labels from the local classifier for texts (flyer headings, with an optional description,
+// or list item names): [{ category, product_type, group }], each { choice, p }.
+// Throws when it is unreachable.
+function classifyLocal(offers, timeout) {
+  const url = $os.getenv("CLASSIFIER_URL")
+  if (!url) throw new Error("CLASSIFIER_URL is not set")
+  const res = $http.send({
+    url: url.replace(/\/$/, "") + "/classify",
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ offers: offers }),
+    timeout: timeout,
+  })
+  if (res.statusCode !== 200) throw new Error("Classifier HTTP " + res.statusCode)
+  return res.json.results
+}
+
+// The local classifier's type, or "none" below MIN_P (like productAnswer).
+function localType(result) {
+  return result.product_type.p >= MIN_P ? result.product_type.choice : "none"
+}
+
 // A choice answer's pick, or "none" when its probability is below MIN_P.
 function productAnswer(answer) {
   const p = answer && answer.choice && answer.probabilities ? answer.probabilities[answer.choice] || 0 : 0
@@ -118,7 +153,8 @@ const normalize = (name) =>
     .join(" ")
 
 // Type key for a list item name, "none" when there is none, or "" when it could not be
-// decided now (no API key, Jev unavailable); the daily offers_sync cron retries those.
+// decided now (no API key, Jev or the classifier unavailable); the daily offers_sync cron
+// retries those.
 // Adds the Jev input tokens used to `usage.tokens` when given.
 function resolveName(app, name, usage) {
   const norm = normalize(name)
@@ -140,9 +176,13 @@ function resolveName(app, name, usage) {
   if (!type) {
     try {
       // Short timeout: the item is being saved while this runs.
-      const result = classifyProduct(norm, 3)
-      type = result.type
-      if (usage) usage.tokens += result.tokens
+      if (classifier(app) === "local") {
+        type = localType(classifyLocal([{ heading: norm }], 3)[0])
+      } else {
+        const result = classifyProduct(norm, 3)
+        type = result.type
+        if (usage) usage.tokens += result.tokens
+      }
     } catch (err) {
       app.logger().warn("product type lookup failed", "name", norm, "error", String(err))
       return ""
@@ -185,4 +225,4 @@ function backfillItems(app, deadline, usage) {
   return done
 }
 
-module.exports = { types, normalize, askJev, groupQuestion, likelyGroups, productQuestion, productAnswer, classifyProduct, resolveName, comparesOffers, backfillItems }
+module.exports = { types, normalize, classifier, classifyLocal, localType, askJev, groupQuestion, likelyGroups, productQuestion, productAnswer, classifyProduct, resolveName, comparesOffers, backfillItems }

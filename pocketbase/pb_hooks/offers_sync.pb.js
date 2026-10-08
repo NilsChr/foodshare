@@ -11,7 +11,7 @@
 // OFFERS_CRON=off (env, set by docker-compose locally) leaves the cron out, so a local
 // PocketBase never sends offers to Jev on its own.
 // POST /api/foodshare/offers-sync      (superuser)  -> { fetched, created, updated, deleted }
-// POST /api/foodshare/offers-classify  (superuser)  -> { classified, remaining, items, matched, tokens, stopped }
+// POST /api/foodshare/offers-classify  (superuser or admin user)  -> { classified, remaining, items, matched, tokens, stopped }
 
 if ($os.getenv("OFFERS_CRON") !== "off") cronAdd("offers_sync", "17 4 * * *", () => {
   try {
@@ -36,11 +36,13 @@ routerAdd("POST", "/api/foodshare/offers-sync", (e) => {
   }
 }, $apis.requireSuperuserAuth())
 
-// Classifies for up to 60 seconds; call again until `remaining` is 0.
+// Classifies for up to 60 seconds; call again until `remaining` is 0. Admin users run it from
+// the app after switching the classifier (users.admin, see pb_migrations/*_admin_classifier.js).
 routerAdd("POST", "/api/foodshare/offers-classify", (e) => {
+  if (!e.hasSuperuserAuth() && !e.auth.getBool("admin")) throw new ForbiddenError("Only admins can classify offers.")
   try {
     return e.json(200, require(`${__hooks}/offers_classify.js`).classifyOffers(e.app, 60))
   } catch (err) {
     throw new BadRequestError("Offers classify failed: " + err)
   }
-}, $apis.requireSuperuserAuth())
+}, $apis.requireAuth())

@@ -1,5 +1,5 @@
 .venv/
 __pycache__/
-# Exported offers and trained models are local; recreate with export.py and train.py.
+# Exported offers and Jev's Kassal labels are local. Trained models (model/) are committed:
+# the Docker image is built from them (Coolify builds from git).
 data/
-model/

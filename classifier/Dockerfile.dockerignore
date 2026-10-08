@@ -1,0 +1,6 @@
+# The build context is the repository root; send only what the image needs.
+*
+!classifier/requirements.txt
+!classifier/*.py
+!classifier/model
+!pocketbase/pb_hooks/product_types.json
