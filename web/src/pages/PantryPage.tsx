@@ -1,26 +1,61 @@
-import { ChefHat, CircleCheck, ListPlus, Plus, Refrigerator, X } from 'lucide-react'
+import { ChefHat, ChevronDown, CircleCheck, ListPlus, Plus, Refrigerator, X } from 'lucide-react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import { AddToListSheet, RecipeThumb } from '../components/recipe'
 import { Button, Empty, ErrorText, Input, PageHeader, Spinner } from '../components/ui'
 import { useMe } from '../lib/auth'
-import { normalize, pantryMatches, proper } from '../lib/match'
-import { col, errorMessage, type Recipe } from '../lib/pb'
+import { categoryIcon, sectionLeader, sectionTitle } from '../lib/categories'
+import { categorize, normalize, pantryMatches, proper } from '../lib/match'
+import { col, errorMessage, type Category, type PantryItem, type Recipe } from '../lib/pb'
 import { useSpace } from '../lib/space'
 import { t, tn } from '../lib/i18n'
 
 const SHOWN = 30
+const COLLAPSED_KEY = 'foodshare.pantryCollapsed'
+
+function loadCollapsed() {
+  try {
+    return localStorage.getItem(COLLAPSED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
 
 /** What the household has at home, and the recipes that need the fewest extra ingredients. */
 export default function PantryPage() {
   const me = useMe()
-  const { space, pantry, items, recipes, loading, patchPantry, removePantry } = useSpace()
+  const { space, pantry, items, recipes, categories, loading, patchPantry, removePantry } = useSpace()
   const [text, setText] = useState('')
   const [error, setError] = useState('')
   const [adding, setAdding] = useState<Recipe | null>(null)
+  const [collapsed, setCollapsed] = useState(loadCollapsed)
+
+  function toggleCollapsed() {
+    setCollapsed(!collapsed)
+    try {
+      localStorage.setItem(COLLAPSED_KEY, collapsed ? '0' : '1')
+    } catch {
+      // Only remembered for this session.
+    }
+  }
 
   const matches = useMemo(() => pantryMatches(recipes, items, pantry).slice(0, SHOWN), [recipes, items, pantry])
   const basket = items.filter((i) => i.checked).length
+
+  // Pantry entries under the same sections as the list, in store order, Other last. An item's
+  // section on the list (possibly moved by hand) wins over guessing from keywords.
+  const sections = useMemo(() => {
+    const listed = new Map(items.filter((i) => i.category).map((i) => [normalize(i.name), i.category]))
+    const byId = new Map<string, PantryItem[]>()
+    for (const p of pantry) {
+      const key = sectionLeader(listed.get(normalize(p.name)) ?? categorize(p.name, categories), categories)?.id ?? ''
+      byId.set(key, [...(byId.get(key) ?? []), p])
+    }
+    return [
+      ...categories.filter((c) => byId.has(c.id)).map((c) => ({ category: c as Category | undefined, entries: byId.get(c.id)! })),
+      ...(byId.has('') ? [{ category: undefined, entries: byId.get('')! }] : []),
+    ]
+  }, [pantry, items, categories])
 
   // Names to autocomplete: recipe ingredients and things bought before.
   const known = useMemo(() => {
@@ -65,17 +100,38 @@ export default function PantryPage() {
         {loading ? <Spinner /> : (
           <>
             {pantry.length > 0 && (
-              <ul className="flex flex-wrap gap-1.5">
-                {pantry.map((p) => (
-                  <li key={p.id} className="inline-flex items-center rounded-full bg-card pl-3 font-semibold ring-1 ring-line">
-                    {proper(p.name)}
-                    <button onClick={() => remove(p.id)} aria-label={t('Remove {name}', { name: p.name })}
-                      className="ml-0.5 flex size-8 items-center justify-center rounded-full text-muted hover:text-danger">
-                      <X className="size-4" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <section className="space-y-2 rounded-3xl bg-card p-3 ring-1 ring-line">
+                <h2>
+                  <button onClick={toggleCollapsed} aria-expanded={!collapsed} className="flex w-full items-center gap-1.5 px-1 text-left">
+                    <ChevronDown className={`size-4 shrink-0 text-muted transition ${collapsed ? '-rotate-90' : ''}`} />
+                    <span className="font-extrabold">{tn(pantry.length, '{n} item at home', '{n} items at home')}</span>
+                    {collapsed && <span className="min-w-0 flex-1 truncate text-sm text-muted">{pantry.map((p) => proper(p.name)).join(', ')}</span>}
+                  </button>
+                </h2>
+                {!collapsed && sections.map(({ category, entries }) => {
+                  const Icon = categoryIcon(category?.icon)
+                  return (
+                    <div key={category?.id ?? 'other'}>
+                      <h3 className="flex items-center gap-1.5 px-1 text-xs font-extrabold uppercase tracking-wider text-muted">
+                        <Icon className="size-3.5" />
+                        <span className="truncate">{category ? sectionTitle(category, categories) : t('Other')}</span>
+                      </h3>
+                      <ul className="flex flex-wrap">
+                        {entries.map((p) => (
+                          <li key={p.id}>
+                            <button onClick={() => remove(p.id)} aria-label={t('Remove {name}', { name: p.name })}
+                              className="group inline-flex items-center gap-0.5 rounded-full px-1.5 py-1 font-semibold hover:bg-soft">
+                              {proper(p.name)}
+                              <X className="size-3 text-muted group-hover:text-danger" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )
+                })}
+                {!collapsed && <p className="px-1 text-xs text-muted">{t('Tap an item to remove it.')}</p>}
+              </section>
             )}
             {basket > 0 && (
               <p className="px-1 text-xs text-muted">{tn(basket, 'The {n} crossed-off item on the list counts too.', 'The {n} crossed-off items on the list count too.')}</p>
