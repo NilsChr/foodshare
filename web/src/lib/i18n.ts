@@ -344,6 +344,7 @@ const NO: Record<string, string> = {
   'saved on offers since {date}': 'spart på tilbud siden {date}',
   Savings: 'Besparelser',
   'Nothing saved yet': 'Ingenting spart ennå',
+  'Pick offers with a before-price on the shopping list to start saving.': 'Velg tilbud med førpris på handlelisten for å begynne å spare.',
   'Pick offers on the shopping list. What they save shows up here when you clear the basket.': 'Velg tilbud på handlelisten. Det du sparer dukker opp her når du tømmer kurven.',
   'shopping trip': 'handletur',
   'shopping trips': 'handleturer',

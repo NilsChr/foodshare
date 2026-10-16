@@ -454,33 +454,43 @@ function CategorySheet({ category, onClose, spaceId, nextSort }: {
   )
 }
 
-/** "312 kr saved on offers since 7 October 2026", from the group's bought offers. Hidden until something was saved. */
+/** "312 kr saved on offers since 7 October 2026", from the group's bought offers; a hint until something was saved. */
 function Savings() {
   const { space } = useSpace()
-  const [summary, setSummary] = useState<{ saved: number; since: Date; space: string } | null>(null)
+  const [summary, setSummary] = useState<{ saved: number; since: Date | null; space: string } | null>(null)
 
   useEffect(() => {
     let alive = true
     col.purchases().getFullList({ filter: pb.filter('space = {:id}', { id: space.id }), sort: 'created', fields: 'price,pre_price,created' })
-      .then((list) => alive && list.length > 0 && setSummary({
-        saved: list.reduce((sum, p) => sum + saving(p), 0), since: new Date(list[0].created.replace(' ', 'T')), space: space.id,
+      .then((list) => alive && setSummary({
+        saved: list.reduce((sum, p) => sum + saving(p), 0), since: list.length ? new Date(list[0].created.replace(' ', 'T')) : null, space: space.id,
       }))
-      .catch(() => {})
+      .catch(() => alive && setSummary({ saved: 0, since: null, space: space.id }))
     return () => {
       alive = false
     }
   }, [space.id])
 
   // Ignore a summary left from the group shown before.
-  if (!summary || summary.space !== space.id || summary.saved <= 0) return null
+  if (!summary || summary.space !== space.id) return null
+  const saved = summary.saved > 0 && summary.since
   return (
     <Link to="/savings" className="flex items-center gap-3 rounded-3xl bg-brand-soft px-4 py-3 active:scale-[0.99]">
       <PiggyBank className="size-7 shrink-0 text-brand-text" />
       <p className="min-w-0 flex-1">
-        <b className="block text-lg font-extrabold tabular-nums text-brand-text"><RollingNumber text={formatPrice(summary.saved, true)} /></b>
-        <span className="block text-sm">
-          {t('saved on offers since {date}', { date: summary.since.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) })}
-        </span>
+        {saved ? (
+          <>
+            <b className="block text-lg font-extrabold tabular-nums text-brand-text"><RollingNumber text={formatPrice(summary.saved, true)} /></b>
+            <span className="block text-sm">
+              {t('saved on offers since {date}', { date: summary.since!.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) })}
+            </span>
+          </>
+        ) : (
+          <>
+            <b className="block text-lg font-extrabold text-brand-text">{t('Nothing saved yet')}</b>
+            <span className="block text-sm">{t('Pick offers with a before-price on the shopping list to start saving.')}</span>
+          </>
+        )}
       </p>
       <ChevronRight className="size-5 shrink-0 text-brand-text" />
     </Link>
