@@ -1,5 +1,5 @@
 import {
-  Check, ChevronRight, Cpu, Newspaper, PiggyBank, Languages, Link2, Crown, LogOut, Pencil, Plus, Send, Trash2, UserMinus, X,
+  Check, ChevronRight, Cpu, KeyRound, Newspaper, PiggyBank, Languages, Link2, Crown, LogOut, Pencil, Plus, Send, Trash2, UserMinus, X,
 } from 'lucide-react'
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router'
@@ -9,7 +9,7 @@ import SectionOrder from '../components/SectionOrder'
 import { Avatar, Button, RollingNumber, ErrorText, Field, IconButton, Input, PageHeader, Sheet } from '../components/ui'
 import { useMe } from '../lib/auth'
 import { CATEGORY_ICONS, categoryIcon, categoryName, groupMembers } from '../lib/categories'
-import { col, displayName, errorMessage, pb, type AppSettings, type Category, type Chain, type Invite } from '../lib/pb'
+import { col, displayName, errorMessage, pb, type AllowedEmail, type AppSettings, type Category, type Chain, type Invite } from '../lib/pb'
 import { useSpace, useSpaces } from '../lib/space'
 import { lang, locale, setLang, t, tn } from '../lib/i18n'
 import { formatPrice, saving } from '../lib/offers'
@@ -594,8 +594,78 @@ function Admin() {
           {note && <p className="text-sm">{note}</p>}
           <ErrorText error={error} />
         </div>
+        <AllowedEmails />
       </div>
     </Section>
+  )
+}
+
+/** Invite only: emails that may create an account. Each is removed once its account exists. */
+function AllowedEmails() {
+  const [email, setEmail] = useState('')
+  const [rows, setRows] = useState<AllowedEmail[]>([])
+  const [open, setOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  // The "*" row (anyone may sign up) is for superusers in the dashboard.
+  const load = () => col.allowedEmails().getFullList({ filter: 'email != "*"', sort: '-created' }).then(setRows)
+  useEffect(() => {
+    col.allowedEmails().getFullList({ filter: 'email = "*"' }).then((r) => setOpen(r.length > 0)).catch(() => {})
+    load().catch((e) => setError(errorMessage(e)))
+  }, [])
+
+  async function submit(e: FormEvent) {
+    e.preventDefault()
+    setBusy(true)
+    setError('')
+    try {
+      await col.allowedEmails().create({ email: email.trim().toLowerCase() })
+      setEmail('')
+      await load()
+    } catch (err) {
+      setError(t(errorMessage(err)))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function remove(id: string) {
+    setError('')
+    try {
+      await col.allowedEmails().delete(id)
+      await load()
+    } catch (err) {
+      setError(errorMessage(err))
+    }
+  }
+
+  return (
+    <div className="space-y-3 px-4 py-3">
+      <div className="flex items-center gap-3">
+        <KeyRound className="size-5 text-muted" />
+        <span className="flex-1 font-bold">{t('Who can sign up')}</span>
+      </div>
+      <p className="text-sm text-muted">
+        {open ? t('Sign-up is open to everyone right now.')
+          : t('Foodshare is invite only. Add an email to let that person create an account. People invited to a group can always sign up. The email is removed from this list once the account exists.')}
+      </p>
+      <form onSubmit={submit} className="flex gap-2">
+        <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('Email')}
+          aria-label={t('Allow email')} />
+        <Button type="submit" icon={Plus} busy={busy} aria-label={t('Allow email')} />
+      </form>
+      <ErrorText error={error} />
+      {rows.map((r) => (
+        <div key={r.id} className="flex items-center gap-2 rounded-2xl bg-soft py-1 pl-4 pr-1 text-sm">
+          <span className="flex-1 truncate">
+            <span className="text-muted">{t('Waiting:')}</span> <b>{r.email}</b>
+          </span>
+          <span className="shrink-0 text-xs text-muted tabular-nums">{new Date(r.created).toLocaleDateString(locale)}</span>
+          <IconButton icon={X} label={t('Remove {email}', { email: r.email })} onClick={() => remove(r.id)} />
+        </div>
+      ))}
+    </div>
   )
 }
 

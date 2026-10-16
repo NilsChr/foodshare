@@ -155,5 +155,34 @@ check("recipe price cascade-deleted", (await call(admin, "GET", `/api/collection
 check("purchase cascade-deleted", (await call(admin, "GET", `/api/collections/purchases/records/${purchase.id}`)).status, 404);
 check("pantry cascade-deleted",(await call(admin, "GET", `/api/collections/pantry/records/${stock.id}`)).status, 404);
 
+// Invite-only list: admins manage it in the app; a row goes once its account exists.
+await call(admin, "PATCH", `/api/collections/users/records/${alice.id}`, { admin: true });
+const aliceAdmin = (await call(null, "POST", "/api/collections/users/auth-with-password", { identity: alice.email, password: pw })).body.token;
+const newcomer = `rules-newcomer-${Date.now()}@foodshare.test`;
+const allowed = (await call(aliceAdmin, "POST", "/api/collections/allowed_emails/records", { email: ` ${newcomer.toUpperCase()} ` })).body;
+check("admin adds allowed email", allowed.email, newcomer);
+check("admin lists allowed emails",
+  (await call(aliceAdmin, "GET", "/api/collections/allowed_emails/records")).body.items?.some((r) => r.id === allowed.id), true);
+check("non-admin sees no allowed emails", (await call(bob.token, "GET", "/api/collections/allowed_emails/records")).body.totalItems, 0);
+check("non-admin cannot add allowed email",
+  (await call(bob.token, "POST", "/api/collections/allowed_emails/records", { email: "x@foodshare.test" })).status, 400);
+check("admin cannot open sign-up to everyone",
+  (await call(aliceAdmin, "POST", "/api/collections/allowed_emails/records", { email: " * " })).status, 403);
+check("admin cannot add an email with an account",
+  (await call(aliceAdmin, "POST", "/api/collections/allowed_emails/records", { email: bob.email })).status, 400);
+check("admin cannot add a non-email",
+  (await call(aliceAdmin, "POST", "/api/collections/allowed_emails/records", { email: "nope" })).status, 400);
+check("allowed email cannot be edited",
+  (await call(aliceAdmin, "PATCH", `/api/collections/allowed_emails/records/${allowed.id}`, { note: "x" })).status, 403);
+const signup = (await call(null, "POST", "/api/collections/users/records", { email: newcomer, password: pw, passwordConfirm: pw })).body;
+check("allowed email signs up", !!signup.id, true);
+check("allowed email removed after sign-up", (await call(admin, "GET", `/api/collections/allowed_emails/records/${allowed.id}`)).status, 404);
+await call(admin, "DELETE", `/api/collections/users/records/${signup.id}`);
+const unused = (await call(aliceAdmin, "POST", "/api/collections/allowed_emails/records", { email: `rules-unused-${Date.now()}@foodshare.test` })).body;
+check("non-admin cannot remove allowed email",
+  (await call(bob.token, "DELETE", `/api/collections/allowed_emails/records/${unused.id}`)).status, 404);
+check("admin removes allowed email", (await call(aliceAdmin, "DELETE", `/api/collections/allowed_emails/records/${unused.id}`)).status, 204);
+await call(admin, "PATCH", `/api/collections/users/records/${alice.id}`, { admin: false });
+
 console.log(failed ? `${failed} failed` : "all passed");
 process.exit(failed ? 1 : 0);

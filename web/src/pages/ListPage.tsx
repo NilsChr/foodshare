@@ -1,7 +1,7 @@
 import {
-  ArrowUpDown, BookOpen, CircleAlert, Check, ChevronDown, ChevronRight, Layers, List, Pencil, Plus, Refrigerator, ShoppingBasket, Sparkles, Store, Tag, Trash2,
+  ArrowUpDown, BookOpen, CircleAlert, Check, ChevronDown, ChevronRight, Layers, List, Pencil, Plus, Refrigerator, ShoppingBasket, Sparkles, Tag, Trash2,
 } from 'lucide-react'
-import { useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { ChainLogo, OfferBadge, OffersSheet } from '../components/offers'
 import { formatPrice, offerSize, saving, shortfall } from '../lib/offers'
@@ -87,10 +87,10 @@ export default function ListPage() {
         })
       }
     }
-    // Most items first; equal counts go to the bigger total discount.
+    // Biggest known saving first, then most items, then the bigger total discount.
     const ranked = [...byChain].map(([chain, e]) => ({ chain: chains.find((c) => c.id === chain), ...e }))
       .filter((r) => r.chain)
-      .sort((a, b) => b.items.length - a.items.length || b.discount - a.discount)
+      .sort((a, b) => b.saved - a.saved || b.items.length - a.items.length || b.discount - a.discount)
     return ranked[0]?.items.length >= 2 ? ranked : null
   }, [space.chains, open, itemOffers, offerById, chains])
   // The offers picked for items on this trip, crossed off or not.
@@ -283,9 +283,13 @@ export default function ListPage() {
 
         {loading ? <Spinner /> : (
           <>
-            {storeTip && <StoreTip ranked={storeTip} total={open.length} />}
+            {(storeTip || suggestions.length > 0) && (
+              <div className="flex flex-wrap gap-2">
+                {storeTip && <StoreTip ranked={storeTip} total={open.length} />}
+                {suggestions.length > 0 && <Synergies suggestions={suggestions} />}
+              </div>
+            )}
             {picked.length > 0 && <PickedTotal offers={picked} />}
-            {suggestions.length > 0 && <Synergies suggestions={suggestions} />}
 
             {!open.length && !checked.length && (
               <Empty icon={ShoppingBasket} title={t('The list is empty')}>
@@ -471,75 +475,92 @@ function PickedTotal({ offers }: { offers: Offer[] }) {
   )
 }
 
-/** Recommends the store with offers on the most items on the list, with how the others compare. */
-function StoreTip({ ranked, total }: { ranked: { chain?: Chain; items: Item[]; saved: number; savedItems: number }[]; total: number }) {
-  const [hidden, setHidden] = useState(false)
-  if (hidden) return null
-  const [best, ...rest] = ranked
+/** A compact button above the list that opens its details in a sheet. */
+function TipButton({ onClick, children }: { onClick: () => void; children: ReactNode }) {
   return (
-    <section className="rounded-3xl bg-brand-soft p-4">
-      <div className="mb-2 flex items-center gap-2">
-        <Store className="size-5 text-brand-text" />
-        <h2 className="flex-1 font-extrabold">{t('Best store this week')}</h2>
-        <button className="text-sm font-bold text-brand-text" onClick={() => setHidden(true)}>{t('Hide')}</button>
-      </div>
-      <Link to="/offers" className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-sm">
-        <ChainLogo chain={best.chain} className="h-9 w-20" />
-        <span className="min-w-0 flex-1">
-          <span className="block font-extrabold">{t('Offers on {n} of {total} items', { n: best.items.length, total })}</span>
-          <span className="block truncate text-xs text-muted">{best.items.map((i) => proper(i.name)).join(', ')}</span>
-          {best.saved > 0 && (
-            <span className="block text-xs">
-              <b className="text-brand-text">{t('Save about {amount}', { amount: formatPrice(best.saved, true) })}</b>{' '}
-              <span className="text-muted">{tn(best.savedItems, '(before-price known for {n} item)', '(before-price known for {n} items)')}</span>
-            </span>
-          )}
-        </span>
-        <ChevronRight className="size-5 shrink-0 text-muted" />
-      </Link>
-      {rest.length > 0 && (
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 px-1 text-xs font-bold text-muted">
-          {rest.map((r) => (
-            <span key={r.chain!.id} className="flex items-center gap-1.5">
-              <ChainLogo chain={r.chain} className="h-5 w-12" /> {r.items.length}
-            </span>
-          ))}
-        </div>
-      )}
-    </section>
+    <button onClick={onClick}
+      className="flex min-w-0 max-w-full items-center gap-2 rounded-full bg-brand-soft py-1 pl-1.5 pr-2.5 text-sm font-extrabold text-brand-text">
+      {children}
+      <ChevronRight className="size-4 shrink-0" />
+    </button>
   )
 }
 
-function Synergies({ suggestions }: { suggestions: ReturnType<typeof synergies> }) {
-  const [hidden, setHidden] = useState(false)
-  if (hidden) return null
+/** Recommends the store that saves the most on the list; the sheet compares every chosen store. */
+function StoreTip({ ranked, total }: { ranked: { chain?: Chain; items: Item[]; saved: number; savedItems: number }[]; total: number }) {
+  const [open, setOpen] = useState(false)
+  const best = ranked[0]
   return (
-    <section className="rounded-3xl bg-brand-soft p-4">
-      <div className="mb-3 flex items-center gap-2">
-        <Sparkles className="size-5 text-brand-text" />
-        <h2 className="flex-1 font-extrabold">{t('Make more of this shop')}</h2>
-        <button className="text-sm font-bold text-brand-text" onClick={() => setHidden(true)}>{t('Hide')}</button>
-      </div>
-      <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1">
-        {suggestions.map(({ recipe, matched, missing }) => (
-          <Link key={recipe.id} to={`/recipes/${recipe.id}`}
-            className="flex w-64 shrink-0 snap-start gap-3 rounded-2xl bg-card p-2 pr-3 shadow-sm">
-            {recipe.image ? (
-              <img src={recipeImage(recipe, '120x120')} alt="" className="size-16 shrink-0 rounded-xl object-cover" />
-            ) : (
-              <span className="flex size-16 shrink-0 items-center justify-center rounded-xl bg-soft text-muted"><BookOpen className="size-6" /></span>
-            )}
-            <span className="min-w-0 py-0.5">
-              <span className="block truncate font-extrabold">{recipe.title}</span>
-              <span className="block text-sm text-brand-text">{tn(matched.length, 'Uses {n} item on your list', 'Uses {n} items on your list')}</span>
-              <span className="block truncate text-xs text-muted">
-                {missing.length ? `+ ${missing.map(proper).join(', ')}` : t('Nothing extra needed')}
+    <>
+      <TipButton onClick={() => setOpen(true)}>
+        <ChainLogo chain={best.chain} className="h-6 w-14" />
+        <span className="truncate tabular-nums">
+          {best.saved > 0 ? t('Save about {amount}', { amount: formatPrice(best.saved, true) })
+            : tn(best.items.length, 'Offers on {n} item', 'Offers on {n} items')}
+        </span>
+      </TipButton>
+      <Sheet open={open} onClose={() => setOpen(false)} title={t('Best store this week')}>
+        <ul className="space-y-2">
+          {ranked.map((r, i) => (
+            <li key={r.chain!.id} className={`flex items-center gap-3 rounded-2xl p-3 ${i === 0 ? 'bg-brand-soft' : 'bg-card ring-1 ring-line'}`}>
+              <ChainLogo chain={r.chain} className="h-9 w-20" />
+              <span className="min-w-0 flex-1">
+                <span className="block font-extrabold">{t('Offers on {n} of {total} items', { n: r.items.length, total })}</span>
+                <span className="block truncate text-xs text-muted">{r.items.map((i) => proper(i.name)).join(', ')}</span>
+                {r.saved > 0 && (
+                  <span className="block text-xs text-muted">
+                    {tn(r.savedItems, '(before-price known for {n} item)', '(before-price known for {n} items)')}
+                  </span>
+                )}
               </span>
-            </span>
-          </Link>
-        ))}
-      </div>
-    </section>
+              {r.saved > 0 && (
+                <span className="shrink-0 whitespace-nowrap text-sm font-extrabold text-brand-text tabular-nums">
+                  {t('about {amount}', { amount: formatPrice(r.saved, true) })}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+        <Link to="/offers" className="mt-3 flex items-center justify-center gap-1 text-sm font-bold text-brand-text">
+          {t('See all offers')} <ChevronRight className="size-4" />
+        </Link>
+      </Sheet>
+    </>
+  )
+}
+
+/** Recipes that use what is already on the list, behind a compact button. */
+function Synergies({ suggestions }: { suggestions: ReturnType<typeof synergies> }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <TipButton onClick={() => setOpen(true)}>
+        <span className="flex size-6 shrink-0 items-center justify-center"><Sparkles className="size-4" /></span>
+        <span className="truncate">{tn(suggestions.length, '{n} recipe fits', '{n} recipes fit')}</span>
+      </TipButton>
+      <Sheet open={open} onClose={() => setOpen(false)} title={t('Make more of this shop')}>
+        <ul className="space-y-2">
+          {suggestions.map(({ recipe, matched, missing }) => (
+            <li key={recipe.id}>
+              <Link to={`/recipes/${recipe.id}`} className="flex gap-3 rounded-2xl bg-card p-2 pr-3 ring-1 ring-line">
+                {recipe.image ? (
+                  <img src={recipeImage(recipe, '120x120')} alt="" className="size-16 shrink-0 rounded-xl object-cover" />
+                ) : (
+                  <span className="flex size-16 shrink-0 items-center justify-center rounded-xl bg-soft text-muted"><BookOpen className="size-6" /></span>
+                )}
+                <span className="min-w-0 py-0.5">
+                  <span className="block truncate font-extrabold">{recipe.title}</span>
+                  <span className="block text-sm text-brand-text">{tn(matched.length, 'Uses {n} item on your list', 'Uses {n} items on your list')}</span>
+                  <span className="block truncate text-xs text-muted">
+                    {missing.length ? `+ ${missing.map(proper).join(', ')}` : t('Nothing extra needed')}
+                  </span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </Sheet>
+    </>
   )
 }
 

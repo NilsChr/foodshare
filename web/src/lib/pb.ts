@@ -17,6 +17,12 @@ export interface AppSettings extends RecordModel {
   classifier: 'jev' | 'local'
 }
 
+/** Invite only: an email that may create an account; removed once it has (see pb_hooks/invite_only.pb.js). */
+export interface AllowedEmail extends RecordModel {
+  email: string
+  note: string
+}
+
 export interface Space extends RecordModel {
   name: string
   owner: string
@@ -165,6 +171,7 @@ export const col = {
   recipePrices: () => pb.collection<RecipePrice>('recipe_prices'),
   purchases: () => pb.collection<Purchase>('purchases'),
   appSettings: () => pb.collection<AppSettings>('app_settings'),
+  allowedEmails: () => pb.collection<AllowedEmail>('allowed_emails'),
 }
 
 export function recipeImage(recipe: Recipe, thumb?: '400x300' | '800x600' | '120x120') {
