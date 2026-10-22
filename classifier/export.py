@@ -1,13 +1,15 @@
-"""Saves this week's classified offers from PocketBase as training data.
+"""Saves every offer label Jev has given as training data.
 
-Offers are replaced every week and PocketBase keeps no history, so run this regularly to build
-up data: each run writes data/offers-<date>.jsonl (heading, description and Jev's labels).
+PocketBase keeps Jev's labels in `offer_labels` after the offers expire (see
+pocketbase/pb_hooks/offers_classify.js), so one run gets the whole history: it writes
+data/labels.jsonl (heading, description, category, product_type), replacing the last export.
+Labels on the offers themselves are not exported: with the local classifier on, they are its
+own guesses.
 
     python export.py            # local PocketBase from docker-compose
     POCKETBASE_URL=... POCKETBASE_USER=... POCKETBASE_PASS=... python export.py
 """
 
-import datetime
 import json
 import os
 import pathlib
@@ -17,7 +19,7 @@ import urllib.request
 URL = os.environ.get("POCKETBASE_URL", "http://localhost:8090")
 USER = os.environ.get("POCKETBASE_USER", "admin@foodshare.localhost")
 PASS = os.environ.get("POCKETBASE_PASS", "localadmin123")
-FIELDS = "key,chain,heading,description,category,product_type"
+FIELDS = "heading,description,category,product_type"
 
 
 def api(path, body=None, token=None):
@@ -31,22 +33,21 @@ def api(path, body=None, token=None):
 
 def main():
     token = api("/api/collections/_superusers/auth-with-password", {"identity": USER, "password": PASS})["token"]
-    # Only classified offers are useful as labels.
-    query = urllib.parse.urlencode({"perPage": 500, "fields": FIELDS, "filter": "category != '' && product_type != ''"})
-    offers, page = [], 1
+    query = urllib.parse.urlencode({"perPage": 500, "fields": FIELDS, "sort": "created"})
+    labels, page = [], 1
     while True:
-        res = api(f"/api/collections/offers/records?{query}&page={page}", token=token)
-        offers += res["items"]
+        res = api(f"/api/collections/offer_labels/records?{query}&page={page}", token=token)
+        labels += res["items"]
         if page >= res["totalPages"]:
             break
         page += 1
 
-    out = pathlib.Path(__file__).parent / "data" / f"offers-{datetime.date.today()}.jsonl"
+    out = pathlib.Path(__file__).parent / "data" / "labels.jsonl"
     out.parent.mkdir(exist_ok=True)
     with out.open("w") as f:
-        for o in offers:
+        for o in labels:
             f.write(json.dumps(o, ensure_ascii=False) + "\n")
-    print(f"{len(offers)} offers -> {out}")
+    print(f"{len(labels)} labels -> {out}")
 
 
 if __name__ == "__main__":

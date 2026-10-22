@@ -35,10 +35,11 @@ def type_examples():
 
 
 def load():
-    """All exported offers, one per distinct heading and description (the newest label wins).
+    """All exported offers, one per distinct heading and description (the newest label wins):
+    the weekly offer exports from before `offer_labels` existed, then labels.jsonl (export.py).
     Each gets its product group from its type; offers without a type ("none") have none."""
     seen = {}
-    for path in sorted(DATA.glob("offers-*.jsonl")):
+    for path in [*sorted(DATA.glob("offers-*.jsonl")), *DATA.glob("labels.jsonl")]:
         for line in path.open():
             offer = json.loads(line)
             offer["group"] = GROUP.get(offer["product_type"])

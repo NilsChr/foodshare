@@ -11,7 +11,7 @@
 // OFFERS_CRON=off (env, set by docker-compose locally) leaves the cron out, so a local
 // PocketBase never sends offers to Jev on its own.
 // POST /api/foodshare/offers-sync      (superuser)  -> { fetched, created, updated, deleted }
-// POST /api/foodshare/offers-classify  (superuser or admin user)  -> { classified, remaining, items, matched, tokens, stopped }
+// POST /api/foodshare/offers-classify  (superuser or admin user)  -> { classified, reused, remaining, items, matched, tokens, stopped }
 
 if ($os.getenv("OFFERS_CRON") !== "off") cronAdd("offers_sync", "17 4 * * *", () => {
   try {
@@ -22,7 +22,7 @@ if ($os.getenv("OFFERS_CRON") !== "off") cronAdd("offers_sync", "17 4 * * *", ()
   }
   try {
     const result = require(`${__hooks}/offers_classify.js`).classifyOffers($app, 1200)
-    $app.logger().info("offers classify", "classified", result.classified, "remaining", result.remaining, "items", result.items, "matched", result.matched, "tokens", result.tokens, "stopped", result.stopped)
+    $app.logger().info("offers classify", "classified", result.classified, "reused", result.reused, "remaining", result.remaining, "items", result.items, "matched", result.matched, "tokens", result.tokens, "stopped", result.stopped)
   } catch (err) {
     $app.logger().error("offers classify failed", "error", String(err))
   }

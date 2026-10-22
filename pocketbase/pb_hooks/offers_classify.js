@@ -8,8 +8,9 @@
 //
 // Two requests per offer (~500 ms): the category goes with the product group question,
 // then the type within the group (classifyProduct in product_types.js).
-// Offers keep their classification across syncs, so after the first run only new offers
-// are sent. Only public flyer text is sent. Without TYPESAFE_API_KEY this does nothing.
+// Offers keep their classification across syncs, and every answer is also kept in
+// `offer_labels` after the offer expires, so an offer whose text Jev labelled in an earlier
+// week is not sent again. Only public flyer text is sent. Without TYPESAFE_API_KEY this does nothing.
 //
 // Plain module (not *.pb.js): loaded with require() from offers_sync.pb.js.
 
@@ -29,6 +30,38 @@ const CRITERIA = {
   other: "Not food or household: clothes, decorations, tools, toys, pet food, car care",
 }
 
+// Key of an offer's text in `offer_labels`: heading and description without amounts, prices
+// or punctuation, so next week's "Polarkaviar 180g ... Førpris 44,90" finds this week's label.
+function labelKey(record) {
+  const { normalize } = require(`${__hooks}/product_types.js`)
+  return $security.sha256(normalize(record.getString("heading")) + "\n" + normalize(record.getString("description")))
+}
+
+// The label Jev gave this text before, or null.
+function storedLabel(app, key) {
+  try {
+    return app.findFirstRecordByData("offer_labels", "key", key)
+  } catch (_) {
+    return null
+  }
+}
+
+function saveLabel(app, key, record) {
+  try {
+    const label = new Record(app.findCollectionByNameOrId("offer_labels"))
+    label.load({
+      key: key,
+      heading: record.getString("heading"),
+      description: record.getString("description"),
+      category: record.getString("category"),
+      product_type: record.getString("product_type"),
+    })
+    app.save(label)
+  } catch (_) {
+    // Saved meanwhile by another run; the answer is the same.
+  }
+}
+
 // Classifies offers missing a category or product type, then list items missing a product
 // type, then checks which offers list items mean (offer_matches.js), until `seconds` have
 // passed. Returns counts and the Jev input tokens used (the cost). Stops early on rate
@@ -39,7 +72,7 @@ function classifyOffers(app, seconds) {
   if (!$os.getenv("TYPESAFE_API_KEY")) return { skipped: "TYPESAFE_API_KEY is not set" }
 
   const deadline = Date.now() + seconds * 1000
-  const result = { classified: 0, remaining: 0, items: 0, matched: 0, tokens: 0, stopped: "" }
+  const result = { classified: 0, reused: 0, remaining: 0, items: 0, matched: 0, tokens: 0, stopped: "" }
   const usage = { tokens: 0 }
   const todo = app.findRecordsByFilter("offers", "category = '' || product_type = ''", "-discount_pct", 0, 0)
   const category = {
@@ -49,6 +82,16 @@ function classifyOffers(app, seconds) {
   }
   for (const record of todo) {
     if (Date.now() > deadline) break
+    const key = labelKey(record)
+    const known = storedLabel(app, key)
+    if (known) {
+      record.set("category", known.getString("category"))
+      record.set("product_type", known.getString("product_type"))
+      app.save(record)
+      result.classified++
+      result.reused++
+      continue
+    }
     let product
     try {
       product = types.classifyProduct((record.getString("heading") + "\n" + record.getString("description")).trim(), 20, { category: category })
@@ -65,6 +108,7 @@ function classifyOffers(app, seconds) {
     record.set("category", section)
     record.set("product_type", product.type)
     app.save(record)
+    saveLabel(app, key, record)
     result.classified++
   }
   result.remaining = todo.length - result.classified
@@ -78,13 +122,13 @@ function classifyOffers(app, seconds) {
 }
 
 // The same with the local classifier (product_types.js). It labels all offers, not only
-// new ones: ~1200 take well under a second, and offers labelled by Jev before the switch get
-// the local labels too. No offer matches: the local classifier has no model for them, so
+// new ones: ~1200 take well under a second. Offers whose text Jev labelled before
+// (`offer_labels`) keep Jev's label; the model only guesses the rest. No offer matches: the local classifier has no model for them, so
 // items keep what they have (unchecked items show their type's offers as similar).
 function classifyOffersLocal(app, seconds) {
   const types = require(`${__hooks}/product_types.js`)
   const deadline = Date.now() + seconds * 1000
-  const result = { classified: 0, remaining: 0, items: 0, matched: 0, tokens: 0, stopped: "" }
+  const result = { classified: 0, reused: 0, remaining: 0, items: 0, matched: 0, tokens: 0, stopped: "" }
   const offers = app.findRecordsByFilter("offers", "", "-discount_pct", 0, 0)
   const BATCH = 500
   for (let start = 0; start < offers.length; start += BATCH) {
@@ -97,6 +141,15 @@ function classifyOffersLocal(app, seconds) {
       break
     }
     batch.forEach((record, i) => {
+      const known = storedLabel(app, labelKey(record))
+      if (known) {
+        record.set("category", known.getString("category"))
+        record.set("product_type", known.getString("product_type"))
+        app.save(record)
+        result.classified++
+        result.reused++
+        return
+      }
       if (CRITERIA[labels[i].category.choice]) record.set("category", labels[i].category.choice)
       record.set("product_type", types.localType(labels[i]))
       app.save(record)

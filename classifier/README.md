@@ -21,16 +21,18 @@ thousand short headings is not enough data for a neural model to beat this.
 ```sh
 cd classifier
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python export.py    # this week's classified offers -> data/offers-<date>.jsonl
+.venv/bin/python export.py    # every label Jev has given (offer_labels) -> data/labels.jsonl
 .venv/bin/python prepare_kassal.py  # ../kassal/data/enriched.json -> data/kassal-jev.jsonl (optional)
 .venv/bin/python train.py     # agreement with Jev on a held-out 20%, saves model/
 .venv/bin/python serve.py     # HTTP API on :8091
 ```
 
 `export.py` reads the local PocketBase from docker-compose by default; set `POCKETBASE_URL`,
-`POCKETBASE_USER` and `POCKETBASE_PASS` for another one. PocketBase keeps no offer history,
-so export every week: `train.py` uses every file in `data/` (one row per distinct offer,
-newest label wins). `data/` is git-ignored; `model/` is committed.
+`POCKETBASE_USER` and `POCKETBASE_PASS` for another one. Offers expire, but PocketBase keeps
+each label Jev gives in `offer_labels`, so the training data grows by itself every week
+(while the app classifies with Jev) and one export gets all of it. `train.py` uses
+`data/labels.jsonl` and the older weekly `offers-<date>.jsonl` exports (one row per distinct
+offer, newest label wins). `data/` is git-ignored; `model/` is committed.
 
 `kassal/data/enriched.json` (see `kassal/README.md`) is a list of Kassal products (`title`,
 `name`, `category`, `ean`, ...), each with Jev's product group (`jev_response.answers.new_choice`,
