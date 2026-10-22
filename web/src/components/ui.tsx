@@ -187,12 +187,15 @@ export function RollingNumber({ text }: { text: string }) {
         if (!/\d/.test(c)) return <span key={i} aria-hidden className="whitespace-pre">{c}</span>
         const fromRight = digits - ++seen
         const turns = EXTRA_TURNS[fromRight] ?? 0
+        const rows = turns * 10 + 10
         const stop = rolled ? turns * 10 + Number(c) : 0
+        // Move by a share of the column's own height, not by em: browsers may round each row to whole
+        // pixels, and em steps would then drift off the digit further down the column.
         return (
           <span key={i} aria-hidden className="inline-block h-[1.2em] overflow-hidden">
             <span className="flex flex-col transition-transform duration-[1400ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] motion-reduce:duration-0"
-              style={{ transform: `translateY(${-stop * 1.2}em)`, transitionDelay: `${fromRight * 60}ms` }}>
-              {Array.from({ length: turns * 10 + 10 }, (_, n) => <span key={n}>{n % 10}</span>)}
+              style={{ transform: `translateY(${(-stop / rows) * 100}%)`, transitionDelay: `${fromRight * 60}ms` }}>
+              {Array.from({ length: rows }, (_, n) => <span key={n} className="h-[1.2em]">{n % 10}</span>)}
             </span>
           </span>
         )

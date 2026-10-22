@@ -1,0 +1,14 @@
+{
+  "name": "foodshare",
+  "private": true,
+  "scripts": {
+    "up": "docker compose up",
+    "up:classifier": "docker compose --profile classifier up",
+    "down": "docker compose down",
+    "restart": "docker compose restart pocketbase",
+    "logs": "docker compose logs -f pocketbase",
+    "dev": "bun --env-file=.env run dev:web",
+    "dev:web": "cd web && env ${PB_PORT:+VITE_POCKETBASE_URL=http://localhost:$PB_PORT} bun run dev",
+    "test:rules": "node --env-file=.env pocketbase/test-rules.mjs"
+  }
+}

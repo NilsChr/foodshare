@@ -31,9 +31,13 @@ npm run build                # static files in web/dist, against production
 Run PocketBase locally (needs Docker) and test changes before deploying:
 
 ```sh
-docker compose up            # PocketBase on http://localhost:8090, dashboard at /_/
-cd web && bun run dev        # app on http://localhost:5173, talks to the local PocketBase
+bun run up                   # docker compose up: PocketBase on http://localhost:8090, dashboard at /_/
+bun run dev                  # app on http://localhost:5173, talks to the local PocketBase
 ```
+
+Root `package.json` scripts: `up`, `up:classifier` (with the local classifier), `down`, `restart` (PocketBase, e.g. for new migrations), `logs`, `dev`, `test:rules`.
+
+- Port 8090 taken? Set `PB_PORT=8095` in the root `.env`. Docker Compose maps PocketBase to that port, and `bun run dev` points the app at it.
 
 - `pocketbase` builds the same image as production, but uses the hooks from the working tree (PocketBase restarts when they change).
 - PocketBase applies `pb_migrations/` on start. `setup` runs `seed-local.mjs`: a demo user and a first offers sync. The demo and superuser logins are in `docker-compose.yml`; they only exist locally.
